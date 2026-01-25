@@ -14,4 +14,4 @@
 ---
 
 ## 📧 お問い合わせ
-- 🐛　**[不具合報告・ご要望 (GitHub Issue)](https://github.com/SynArrowz/Documents/issues)
+- 🐛　**[不具合報告・ご要望 (GitHub Issue)]((https://github.com/SynArrowz/AppSupport/issues)
