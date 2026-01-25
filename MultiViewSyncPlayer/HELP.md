@@ -33,6 +33,6 @@ A. 複数の動画の音が混ざらないよう、初期設定ではミュー�
 ## お問い合わせ
 不具合の報告や機能のご要望は、[GitHubのIssue](https://github.com/SynArrowz/AppSupport/issues)までお願いいたします。
 
-[プライバシーポリシーはこちら](https://synarrowz.github.io/AppSupport/MultiViewSyncPlayer/HELP.html)
+[プライバシーポリシーはこちら](https://synarrowz.github.io/AppSupport/MultiViewSyncPlayer/PRIVACY)
 
 [トップページに戻る](https://synarrowz.github.io/AppSupport/)
