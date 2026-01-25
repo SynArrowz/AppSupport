@@ -35,4 +35,4 @@ A. 複数の動画の音が混ざらないよう、初期設定ではミュー�
 
 [プライバシーポリシーはこちら](PRIVACY)
 
-[トップページに戻る](README)
+[トップページに戻る](https://synarrowz.github.io/AppSupport/)
