@@ -34,4 +34,5 @@ A. 複数の動画の音が混ざらないよう、初期設定ではミュー�
 不具合の報告や機能のご要望は、[GitHubのIssue](https://github.com/SynArrowz/AppSupport/issues)までお願いいたします。
 
 [プライバシーポリシーはこちら](PRIVACY)
-[トップページに戻る](README.md)
+
+[トップページに戻る](README)
