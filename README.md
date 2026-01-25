@@ -9,9 +9,9 @@
 
 - 📖 **[使い方・ヘルプ (Manual)](MultiViewSyncPlayer/HELP.md)**
 - 🔒 **[プライバシーポリシー (Privacy Policy)](MultiViewSyncPlayer/PRIVACY.md)**
-- 🐛 [不具合報告・ご要望 (GitHub Issue)](https://github.com/SynArrowz/MultiViewSyncPlayer/issues)
+
 
 ---
 
 ## 📧 お問い合わせ
-アプリに関する個別のサポートは、上記リンク先の各リポジトリのIssue機能をご利用ください。
+- 🐛　**[不具合報告・ご要望 (GitHub Issue)](https://github.com/SynArrowz/Documents/issues)
