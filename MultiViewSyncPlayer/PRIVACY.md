@@ -11,4 +11,4 @@ MultiView Sync Player (SynArrows)
 本アプリケーションで再生される動画ファイルやお気に入り設定などのデータは、すべてお客様のデバイス内にのみ保存され、外部サーバーへ送信されることはありません。
 
 ## お問い合わせ
-本アプリに関するご質問は、GitHubのリポジトリのIssueまでお願いいたします。
+本アプリに関するご質問は、[GitHubのIssue](https://github.com/SynArrowz/AppSupport/issues)までお願いいたします。
