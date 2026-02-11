@@ -6,7 +6,7 @@ MultiView Sync Playerは、複数の動画ファイルを同時に読み込み�
 
 ## 基本的な使い方
 
-### 0. 使い方動画を参照ください。
+### 使い方動画を参照ください。Please refer to the usage video.
 
 [!['How To Use Video'](https://github.com/user-attachments/assets/a09c963a-834c-4f63-ba67-232275f3d441)](https://youtu.be/w1SHYm-BIkc)
 
