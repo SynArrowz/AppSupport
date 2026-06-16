@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiNode Sync Builder ユーザー利用ガイド</title>
+    <link rel="shortcut icon" href="favicon.png" type="image/png">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #f8fafc;
+            --surface:   #ffffff;
+            --surface2:  #f1f5f9;
+            --text:      #0f172a;
+            --muted:     #64748b;
+            --primary:   #4f46e5;
+            --primary-g: rgba(79, 70, 229, 0.08);
+            --secondary: #9333ea;
+            --accent:    #059669;
+            --warn:      #d97706;
+            --danger:    #dc2626;
+            --border:    rgba(15, 23, 42, 0.08);
+            --r-lg: 16px; --r-md: 12px; --r-sm: 8px;
+            --font: 'Inter', sans-serif;
+            --title-font: 'Outfit', sans-serif;
+            --ease: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.75;overflow-x:hidden;}
+
+        /* ── decorative glows ── */
+        .glow{position:fixed;border-radius:50%;pointer-events:none;z-index:0;}
+        .glow-a{width:700px;height:700px;top:-180px;right:-150px;background:radial-gradient(circle,rgba(79,70,229,.05) 0%,transparent 70%);}
+        .glow-b{width:600px;height:600px;bottom:0;left:-200px;background:radial-gradient(circle,rgba(147,51,234,.03) 0%,transparent 70%);}
+
+        /* ── header ── */
+        header{
+            position:fixed;top:0;left:0;width:100%;z-index:200;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:14px 40px;
+            background:rgba(255,255,255,.85);backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border);
+        }
+        .logo{font-family:var(--title-font);font-size:20px;font-weight:800;
+            background:linear-gradient(135deg,#4f46e5,#9333ea);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            display:flex;align-items:center;gap:10px;}
+        .lang-sw{display:flex;gap:4px;background:rgba(15,23,42,.04);padding:4px;border-radius:24px;border:1px solid var(--border);}
+        .lang-btn{background:none;border:none;color:var(--muted);padding:5px 14px;font:600 11px/1 var(--font);cursor:pointer;border-radius:20px;transition:var(--ease);}
+        .lang-btn.on{background:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(79,70,229,.2);}
+
+        /* ── layout ── */
+        .wrap{max-width:1440px;margin:88px auto 0;display:flex;padding:36px 40px;gap:40px;min-height:calc(100vh - 88px);}
+
+        /* ── sidebar ── */
+        aside{width:285px;flex-shrink:0;position:sticky;top:108px;height:calc(100vh - 148px);overflow-y:auto;padding-right:12px;}
+        aside::-webkit-scrollbar{width:3px;}
+        aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+        .nav-group{margin-bottom:22px;}
+        .nav-cat{font:800 10px/1 var(--title-font);text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);margin-bottom:10px;padding-left:10px;opacity:.55;}
+        .nav-ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+        .nav-li a{display:flex;align-items:center;gap:10px;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:var(--r-sm);font:500 13px/1 var(--font);border:1px solid transparent;transition:var(--ease);}
+        .nav-li a:hover{color:var(--text);background:rgba(15,23,42,.03);}
+        .nav-li.on a{color:var(--primary);background:var(--primary-g);border-color:rgba(79,70,229,.2);font-weight:700;}
+        .nav-li a .ni{font-size:15px;width:18px;text-align:center;}
+
+        /* ── main content ── */
+        main{flex:1;max-width:940px;}
+        .sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+             padding:40px;margin-bottom:44px;box-shadow:0 8px 30px rgba(15,23,42,.04);transition:var(--ease);}
+        .sec:hover{border-color:rgba(79,70,229,.16);box-shadow:0 12px 32px rgba(15,23,42,.08);}
+        .sec-hd{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+
+        /* typography */
+        .badge{display:inline-block;font:800 9.5px/1 var(--title-font);text-transform:uppercase;letter-spacing:.9px;
+               background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+               padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+        h1{font:700 28px/1.2 var(--title-font);margin-bottom:12px;
+           background:linear-gradient(135deg,#0f172a,#334155);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        h2{font:700 20px/1.3 var(--title-font);color:var(--text);margin:28px 0 10px;}
+        h3{font:700 16px/1.4 var(--title-font);color:var(--text);margin:24px 0 10px;display:flex;align-items:center;gap:8px;}
+        p{color:var(--muted);font-size:14px;margin-bottom:16px;}
+
+        /* premium tag */
+        .pro{display:inline-flex;align-items:center;gap:3px;
+             background:linear-gradient(135deg,#f59e0b,#eab308);color:#1e1b4b;
+             font:800 9px/1 var(--font);padding:2px 8px;border-radius:12px;
+             text-transform:uppercase;letter-spacing:.4px;margin-left:6px;
+             box-shadow:0 2px 8px rgba(245,158,11,.2);vertical-align:middle;}
+
+        /* table */
+        table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;}
+        th,td{padding:11px 15px;border-bottom:1px solid var(--border);}
+        th{background:rgba(15,23,42,.02);color:var(--text);font-weight:600;text-align:left;}
+        td{color:var(--muted);}
+        tr:hover td{color:var(--text);background:rgba(15,23,42,.01);}
+
+        /* step list */
+        .steps{margin:22px 0;display:flex;flex-direction:column;gap:16px;}
+        .step{display:flex;gap:14px;}
+        .sn{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--primary-g);
+            border:1px solid rgba(79,70,229,.2);color:var(--primary);
+            display:flex;align-items:center;justify-content:center;
+            font:700 13px/1 var(--title-font);}
+        .sc{flex:1;font-size:13.5px;color:var(--muted);}
+        .sc strong{color:var(--text);display:block;margin-bottom:3px;font-size:14px;}
+
+        /* screenshot placeholder */
+        .snap{background:#f8fafc;border:2px dashed rgba(15,23,42,.12);border-radius:var(--r-md);
+              padding:28px 20px;margin:20px 0;text-align:center;
+              display:flex;flex-direction:column;align-items:center;gap:10px;transition:var(--ease);}
+        .snap:hover{border-color:var(--primary);background:rgba(79,70,229,.02);border-style:solid;}
+        .snap-icon{font-size:30px;color:var(--primary);opacity:.65;animation:pls 2s infinite ease-in-out;}
+        @keyframes pls{0%,100%{opacity:.5;transform:scale(1);}50%{opacity:.8;transform:scale(1.05);}}
+        .snap-title{font:600 13.5px/1 var(--title-font);color:var(--text);}
+        .snap-path{font:11px/1 monospace;background:rgba(15,23,42,.03);padding:4px 8px;border-radius:4px;color:var(--muted);border:1px solid var(--border);}
+        .snap-desc{font-size:11.5px;color:var(--muted);max-width:520px;line-height:1.5;}
+
+        /* concept image / video */
+        .concept{background:#f8fafc;border:1px solid var(--border);border-radius:var(--r-md);padding:8px;margin:22px auto;max-width:860px;}
+        .concept img, .concept video{width:100%;height:auto;border-radius:var(--r-sm);display:block;}
+        .concept-cap{font:italic 11.5px/1.5 var(--font);color:var(--muted);text-align:center;margin-top:8px;}
+
+        /* alerts */
+        .alert{border-radius:var(--r-md);padding:14px 18px;margin:18px 0;display:flex;gap:14px;font-size:13px;line-height:1.6;}
+        .alert.tip{background:rgba(5,150,105,.04);border:1px solid rgba(5,150,105,.12);color:#065f46;}
+        .alert.warn{background:rgba(217,119,6,.04);border:1px solid rgba(217,119,6,.12);color:#92400e;}
+        .alert-i{font-size:17px;flex-shrink:0;}
+        .alert strong{display:block;margin-bottom:2px;font-family:var(--title-font);}
+
+        /* kbd shortcut */
+        kbd{display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1;
+            border-radius:5px;padding:2px 7px;font:600 11px/1.5 var(--font);color:#334155;
+            box-shadow:0 2px 0 #cbd5e1;}
+
+        /* feature card grid */
+        .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+        .card{background:rgba(15,23,42,.01);border:1px solid var(--border);border-radius:var(--r-md);
+              padding:20px;transition:var(--ease);}
+        .card:hover{background:rgba(15,23,42,.02);border-color:rgba(15,23,42,.12);transform:translateY(-2px);}
+        .card-ico{font-size:26px;margin-bottom:12px;display:block;}
+        .card-ttl{font:700 14.5px/1 var(--title-font);color:var(--text);margin-bottom:6px;}
+        .card-dsc{font-size:12.5px;color:var(--muted);line-height:1.55;}
+
+        /* drag handle example */
+        .dh{display:inline-block;font-weight:700;color:#64748b;background:rgba(15,23,42,.04);
+            border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-size:11px;}
+
+        footer{text-align:center;padding:36px 40px;border-top:1px solid var(--border);margin-top:60px;color:var(--muted);font-size:12px;}
+        footer p{margin-bottom:6px;}
+        :target::before{content:"";display:block;height:100px;margin:-100px 0 0;}
+
+        /* ── feature definition block ── */
+        .guide-def {
+            background: rgba(79, 70, 229, 0.02);
+            border: 1px solid rgba(79, 70, 229, 0.08);
+            border-left: 4px solid var(--primary);
+            border-radius: var(--r-sm);
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+        .guide-def-title {
+            font: 700 13.5px/1.2 var(--title-font);
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .guide-def-ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .guide-def-li {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.65;
+            position: relative;
+            padding-left: 18px;
+        }
+        .guide-def-li::before {
+            content: "•";
+            color: var(--primary);
+            position: absolute;
+            left: 4px;
+            font-weight: bold;
+        }
+        .guide-def-li strong {
+            color: var(--text);
+        }
+
+        /* ── operation block ── */
+        .guide-op {
+            background: rgba(5, 150, 105, 0.01);
+            border: 1px solid rgba(5, 150, 105, 0.06);
+            border-left: 4px solid var(--accent);
+            border-radius: var(--r-sm);
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+        .guide-op-title {
+            font: 700 13.5px/1.2 var(--title-font);
+            color: var(--text);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── download section styles ── */
+        .dl-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 24px;
+        }
+        @media (max-width: 768px) {
+            .dl-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .dl-card {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.03), rgba(147, 51, 234, 0.03));
+            border: 1px solid rgba(79, 70, 229, 0.12);
+            border-radius: var(--r-md);
+            padding: 24px;
+            text-align: center;
+            transition: var(--ease);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dl-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(79,70,229,0.08);
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(147, 51, 234, 0.05));
+        }
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font: 600 14px/1 var(--font);
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+            transition: var(--ease);
+            margin-top: 16px;
+            width: 100%;
+            max-width: 280px;
+        }
+        .dl-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+        }
+        .dl-card-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+        .dl-card-title {
+            font: 700 16px/1.3 var(--title-font);
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .dl-card-desc {
+            font-size: 12.5px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            flex-grow: 1;
+        }
+
+        /* ── hint details (accordion) ── */
+        .hint-details {
+            margin-top: 10px;
+            border: 1px solid rgba(79, 70, 229, 0.08);
+            border-radius: var(--r-sm);
+            background: rgba(79, 70, 229, 0.01);
+            overflow: hidden;
+            transition: var(--ease);
+            text-align: left;
+        }
+        .hint-details[open] {
+            border-color: rgba(79, 70, 229, 0.2);
+            background: rgba(79, 70, 229, 0.02);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.03);
+        }
+        .hint-summary {
+            list-style: none;
+            outline: none;
+            cursor: pointer;
+            padding: 8px 14px;
+            font: 600 12px var(--font);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            transition: var(--ease);
+        }
+        .hint-summary::-webkit-details-marker {
+            display: none;
+        }
+        .hint-summary::before {
+            content: "▶";
+            font-size: 9px;
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+        .hint-details[open] .hint-summary::before {
+            transform: rotate(90deg);
+        }
+        .hint-summary:hover {
+            background: rgba(79, 70, 229, 0.06);
+            color: var(--secondary);
+        }
+        .hint-content {
+            padding: 12px;
+            border-top: 1px solid rgba(79, 70, 229, 0.08);
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="glow glow-a"></div>
+<div class="glow glow-b"></div>
+
+<header>
+    <div class="logo"><span>🔗</span><span>MultiNode Sync Builder Guide</span></div>
+    <div class="lang-sw">
+        <button class="lang-btn on" onclick="sw('ja')">日本語</button>
+        <button class="lang-btn"    onclick="sw('en')">English</button>
+    </div>
+</header>
+
+<div class="wrap">
+<!-- ═════════════════ SIDEBAR ═════════════════ -->
+<aside>
+    <div class="nav-group">
+        <div class="nav-cat" data-i="cat0">1. 概要 &amp; 仕様</div>
+        <ul class="nav-ul">
+            <li class="nav-li on" id="m-download"><a href="#download"><span class="ni">📥</span><span data-i="m_download">アプリのダウンロード</span></a></li>
+            <li class="nav-li" id="m-intro"><a href="#intro"><span class="ni">💡</span><span data-i="m_intro">概要と無料/有料比較</span></a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-cat" data-i="cat1">2. 基本操作</div>
+        <ul class="nav-ul">
+            <li class="nav-li" id="m-s1"><a href="#s1"><span class="ni">🚀</span><span data-i="m_s1">Step 1: 起動 &amp; テンプレート</span></a></li>
+            <li class="nav-li" id="m-s2"><a href="#s2"><span class="ni">👤</span><span data-i="m_s2">Step 2: ノードの基本操作</span></a></li>
+            <li class="nav-li" id="m-s3"><a href="#s3"><span class="ni">🔗</span><span data-i="m_s3">Step 3: リンクの作成</span></a></li>
+            <li class="nav-li" id="m-s4"><a href="#s4"><span class="ni">🔄</span><span data-i="m_s4">Step 4: ビュー切り替え</span></a></li>
+            <li class="nav-li" id="m-s5"><a href="#s5"><span class="ni">↩️</span><span data-i="m_s5">Step 5: Undo / Redo</span></a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-cat" data-i="cat2">3. 応用カスタマイズ</div>
+        <ul class="nav-ul">
+            <li class="nav-li" id="m-s6"><a href="#s6"><span class="ni">⚙️</span><span data-i="m_s6">Step 6: フィールド定義</span></a></li>
+            <li class="nav-li" id="m-s7"><a href="#s7"><span class="ni">🎨</span><span data-i="m_s7">Step 7: 選択肢の色・形・拡大率</span></a></li>
+            <li class="nav-li" id="m-s8"><a href="#s8"><span class="ni">⇅</span><span data-i="m_s8">Step 8: ドラッグ並び替え</span></a></li>
+            <li class="nav-li" id="m-s9"><a href="#s9"><span class="ni">📐</span><span data-i="m_s9">Step 9: 軸マッピングと拡大率</span></a></li>
+            <li class="nav-li" id="m-s10"><a href="#s10"><span class="ni">🏷️</span><span data-i="m_s10">Step 10: グループ枠囲み</span></a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-cat" data-i="cat3">4. 分析 &amp; 検索</div>
+        <ul class="nav-ul">
+            <li class="nav-li" id="m-s11"><a href="#s11"><span class="ni">🔍</span><span data-i="m_s11">Step 11: フィルタリング</span></a></li>
+            <li class="nav-li" id="m-s12"><a href="#s12"><span class="ni">📊</span><span data-i="m_s12">Step 12: 統計パネル</span></a></li>
+            <li class="nav-li" id="m-s13"><a href="#s13"><span class="ni">📋</span><span data-i="m_s13">Step 13: 凡例 &amp; 検索</span></a></li>
+            <li class="nav-li" id="m-s14"><a href="#s14"><span class="ni">👥</span><span data-i="m_s14">Step 14: 一括編集</span></a></li>
+        </ul>
+    </div>
+    <div class="nav-group">
+        <div class="nav-cat" data-i="cat4">5. データ管理 &amp; 有料機能</div>
+        <ul class="nav-ul">
+            <li class="nav-li" id="m-s15"><a href="#s15"><span class="ni">🗂️</span><span data-i="m_s15">Step 15: プロジェクト管理</span></a></li>
+            <li class="nav-li" id="m-s16"><a href="#s16"><span class="ni">🔒</span><span data-i="m_s16">Step 16: 暗号化保存</span></a></li>
+            <li class="nav-li" id="m-s17"><a href="#s17"><span class="ni">👑</span><span data-i="m_s17">Step 17: CSV連携 &amp; 検証</span></a></li>
+            <li class="nav-li" id="m-s18"><a href="#s18"><span class="ni">🖼️</span><span data-i="m_s18">Step 18: 画像エクスポート</span></a></li>
+        </ul>
+    </div>
+</aside>
+
+<!-- ═════════════════ MAIN ═════════════════ -->
+<main>
+
+<!-- ─── DOWNLOAD ─── -->
+<section class="sec" id="download">
+    <div class="sec-hd">
+        <span class="badge" data-i="m_download">アプリのダウンロード</span>
+        <h1 data-i="dl_h1">MultiNode Sync Builder のダウンロード</h1>
+        <p data-i="dl_p">MultiNode Sync Builder は Microsoft Store より安全にインストール・アップデートが可能です。以下のいずれかの方法でダウンロードページへアクセスしてください。</p>
+    </div>
+    
+    <div class="dl-container">
+        <div class="dl-card">
+            <div class="dl-card-icon">🛍️</div>
+            <div class="dl-card-title" data-i="dl_deep_title">Microsoft Store アプリで開く</div>
+            <div class="dl-card-desc" data-i="dl_deep_desc">Windows 10 または 11 をご利用の場合に最適です。PCのストアアプリが直接起動し、ワンクリックでインストールできます。</div>
+            <a href="ms-windows-store://pdp/?productid=9PLFBNV1DCDN" class="dl-btn" data-i="dl_deep_btn">🛍️ ストアアプリを起動</a>
+        </div>
+        
+        <div class="dl-card">
+            <div class="dl-card-icon">🌐</div>
+            <div class="dl-card-title" data-i="dl_web_title">ウェブブラウザで開く</div>
+            <div class="dl-card-desc" data-i="dl_web_desc">ブラウザ上で Microsoft Store の製品詳細情報を確認したい場合や、ストアアプリが正常に起動しない場合はこちらをご利用ください。</div>
+            <a href="https://apps.microsoft.com/detail/9PLFBNV1DCDN" target="_blank" rel="noopener noreferrer" class="dl-btn" data-i="dl_web_btn">🌐 ウェブストアを開く</a>
+        </div>
+    </div>
+</section>
+
+<!-- ─── INTRO ─── -->
+<section class="sec" id="intro">
+    <div class="sec-hd">
+        <span class="badge" data-i="badge_intro">Overview</span>
+        <h1 data-i="intro_h1">MultiNode Sync Builder 全機能ガイド</h1>
+        <p data-i="intro_p">本アプリは、人・システム・タスクなど多様な「ノード」をキャンバスに配置し、それらの相互関係（リンク）をネットワークグラフやガントタイムラインとして可視化する統合データマッピングプラットフォームです。各ノードが持つ「フィールド属性」に応じてサイズ・色・形状・座標が自動スケーリングされます。</p>
+    </div>
+
+    <div class="concept">
+        <img src="./user_guide_images/guide_overview_concept.jpg" alt="Overview Concept">
+        <div class="concept-cap" data-i="intro_cap">アプリの動的な操作感とノード関係の可視化を示すデモ画面</div>
+    </div>
+
+    <h3 data-i="intro_compare_h">👑 無料版 vs 有料版（Premium）仕様比較</h3>
+    <p data-i="intro_compare_p">有料版にアップグレードすることで、以下のすべての制限が解除され、CSVや画像出力などの高度な機能が利用可能になります。</p>
+    <table>
+        <thead>
+            <tr><th data-i="th_feat">機能 / 制限</th><th data-i="th_free">無料版</th><th data-i="th_pro">有料版 👑</th></tr>
+        </thead>
+        <tbody>
+            <tr><td data-i="r_nodes">ノード登録数</td><td data-i="r_nodes_f">最大 7 個</td><td data-i="r_unlimited">無制限</td></tr>
+            <tr><td data-i="r_fields">カスタムフィールド数</td><td data-i="r_fields_f">最大 3 個</td><td data-i="r_unlimited">無制限</td></tr>
+            <tr><td data-i="r_items">フィールド内選択肢数</td><td data-i="r_items_f">最大 5 個</td><td data-i="r_unlimited">無制限</td></tr>
+            <tr><td data-i="r_csv">CSV インポート / エクスポート</td><td data-i="r_csv_f">❌</td><td data-i="r_csv_p">🟢 バリデーション機能付き</td></tr>
+            <tr><td data-i="r_img">グラフ画像エクスポート（PNG/SVG）</td><td data-i="r_img_f">❌</td><td data-i="r_img_p">🟢 高解像度出力対応</td></tr>
+        </tbody>
+    </table>
+
+    <h3 data-i="intro_shortcut_h">⌨️ キーボードショートカット早見表</h3>
+    <table>
+        <thead><tr><th data-i="kb_op">操作</th><th data-i="kb_key">キー</th></tr></thead>
+        <tbody>
+            <tr><td data-i="kb_undo">元に戻す</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td></tr>
+            <tr><td data-i="kb_redo">やり直す</td><td><kbd>Ctrl</kbd>+<kbd>Y</kbd></td></tr>
+            <tr><td data-i="kb_del">選択ノードを削除</td><td><kbd>Delete</kbd></td></tr>
+            <tr><td data-i="kb_save">プロジェクトの保存</td><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td></tr>
+            <tr><td data-i="kb_saveas">名前を付けて保存</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></td></tr>
+            <tr><td data-i="kb_open">プロジェクトを開く</td><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td></tr>
+            <tr><td data-i="kb_new">新規プロジェクト作成</td><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td></tr>
+            <tr><td data-i="kb_find">ノード検索</td><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td></tr>
+            <tr><td data-i="kb_selectall">すべてのノードを選択</td><td><kbd>Ctrl</kbd>+<kbd>A</kbd></td></tr>
+            <tr><td data-i="kb_help">ヘルプを表示</td><td><kbd>F1</kbd></td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ─── STEP 1 ─── -->
+<section class="sec" id="s1">
+    <div class="sec-hd">
+        <span class="badge">Step 1</span>
+        <h1 data-i="s1_h1">起動とテンプレート読み込み</h1>
+        <p data-i="s1_p">アプリを起動すると「スタートアップダッシュボード」が開き、言語設定・テンプレート選択・既存プロジェクトの読み込みをすぐに行えます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_startup.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s1_title">起動時ダッシュボードモーダル</div>
+            <div class="snap-path">user_guide_images/screenshot_startup.png</div>
+            <div class="snap-desc" data-i="snap_s1_desc">【キャプチャ対象】起動時モーダル全体。言語トグル（EN/JA）、「以前のファイルを開く」ボタン、テンプレートカード一覧（9-Box・Gantt・Risk等）が確認できる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s1_1">言語の切り替え</strong>
+            <span data-i="s1_1d">起動モーダル右上の「EN/JA」トグルで、全UIテキストを日英でリアルタイム切替できます。アプリメイン画面右端にも同じトグルが常時表示されています。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s1_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s1_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s1_4">0から新規プロジェクトを作成</strong>
+            <span data-i="s1_4d">ダッシュボードの「0から作成」ボタンをクリックするか、またはメニューバーの「File」>「New」（あるいは <kbd>Ctrl</kbd>+<kbd>N</kbd>) を実行することで、テンプレートを使わずに空のプロジェクトを新規作成できます。ノードやカスタムフィールドを自由に設計したい場合に最適です。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s1_4.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s1_4.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s1_2">プロジェクトファイル（.mnsb）の読み込み</strong>
+            <span data-i="s1_2d">「以前エクスポートしたプロジェクトを開く」をクリックし、保存済みの <code>.mnsb</code> ファイルをインポートして作業を再開します。暗号化済みファイルの場合はパスワード入力モーダルが自動起動します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s1_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s1_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">4</div><div class="sc">
+            <strong data-i="s1_3">テンプレートの選択と読み込み</strong>
+            <span data-i="s1_3d">「9-Box Talent Grid」「Gantt &amp; Kanban」「Risk Assessment Matrix」「Value vs Effort」「System Architecture Map」「Customer Journey Map」の6テンプレートから選択。無料版ではノード数・フィールド数を自動削減した簡易版が読み込まれます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s1_3.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s1_3.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+    <div class="alert tip">
+        <span class="alert-i">💡</span>
+        <div><strong data-i="s1_tip_t">ツールバー「テンプレート」からも随時追加</strong>
+        <span data-i="s1_tip_d">起動後も画面上部ツールバーの「テンプレート▾」ボタンから、いつでも任意のテンプレートを追加プロジェクトとして読み込めます。</span></div>
+    </div>
+</section>
+
+<!-- ─── STEP 2 ─── -->
+<section class="sec" id="s2">
+    <div class="sec-hd">
+        <span class="badge">Step 2</span>
+        <h1 data-i="s2_h1">ノード（人・タスク・システム）の操作</h1>
+        <p data-i="s2_p">アプリの中心となる「ノード」の作成・編集・削除方法を学びます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_main_view.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s2_title">メインキャンバスとノード管理パネル</div>
+            <div class="snap-path">user_guide_images/screenshot_main_view.png</div>
+            <div class="snap-desc" data-i="snap_s2_desc">【キャプチャ対象】中央D3キャンバス（ノード＆リンク）と、左の「ノード管理パネル」（追加入力欄・顔写真サムネイルリスト）が同時に見える状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s2_a">新規ノードの追加</strong>
+            <span data-i="s2_ad">グラフキャンバス上の背景（空いている部分）をダブルクリックするか、またはテーブル（ノード一覧）の「新規追加」ボタンを押すことでノードを作成できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s2_a.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s2_a.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s2_b">詳細情報の編集と画像の設定（クリック）</strong>
+            <span data-i="s2_bd">ノードをクリックすると「詳細パネル」が開きます。ノード名、個別サイズ、フィールド値、関連設定（リンク一覧）、画像、メモを上から順に確認・編集できます。画像は「画像を選択」ボタンからファイル選択ダイアログ経由で設定します。画像設定後は「編集」ボタンから「画像調整」モーダルを起動し、スライダーでズーム（0.2〜5.0倍）や表示位置（X/Yオフセット）を微調整できます。設定した画像はノードの形状に合わせて自動でクリッピングされます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s2_b.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s2_b.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s2_d">ノードの削除</strong>
+            <span data-i="s2_dd">ノード管理パネルのゴミ箱アイコン、またはノード選択後に <kbd>Delete</kbd> キーで削除。誤操作時は <kbd>Ctrl</kbd>+<kbd>Z</kbd> で即座に復元できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s2_d.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s2_d.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 3 ─── -->
+<section class="sec" id="s3">
+    <div class="sec-hd">
+        <span class="badge">Step 3</span>
+        <h1 data-i="s3_h1">リンク（関係性）の作成と自動太さ調整</h1>
+        <p data-i="s3_p">ノード間の繋がりをビジュアルに描画します。リンクの太さは手動設定ではなく、繋がっているノードの接続数（次数）に応じて自動的に最適化されます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/demo_links.gif" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s3_title">リンクの作成と削除</div>
+            <div class="snap-path">user_guide_images/demo_links.gif</div>
+            <div class="snap-desc" data-i="snap_s3_desc">【キャプチャ対象】ノード間のリンク線、ホバー時の「×」ボタン、詳細パネル内のリンク一覧が確認できる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s3_1">ドラッグ接続でリンクを作成</strong>
+            <span data-i="s3_1d">ノードをホバーすると右端に「接続ハンドル（●）」が現れます。これをドラッグして別のノードへ繋げばリンクが生成されます。また、テーブルビューや詳細パネルの「関連ノード」セレクトボックスからも追加できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s3_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s3_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">💡</div><div class="sc">
+            <strong data-i="s3_3">線の太さは接続数に応じて自動調整</strong>
+            <span data-i="s3_3d">リンクの太さは、接続されている両端のノードの合計リンク数（次数）の平均値に基づいて、自動的に 1.5px から 6px までスケーリングされます。ハブとなる中心的なノード同士を繋ぐリンクは太く強調され、独立性の高いノードのリンクは細く表現されるため、ネットワークの構造が一目で把握できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s3_3.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s3_3.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 4 ─── -->
+<section class="sec" id="s4">
+    <div class="sec-hd">
+        <span class="badge">Step 4</span>
+        <h1 data-i="s4_h1">ビュー（表示形式）の切り替え</h1>
+        <p data-i="s4_p">同じデータを「グラフ」「統計グラフ」「ノード一覧」「フィールド一覧」の4つの表示モードで確認・分析・編集できます。ツールバー中央のビュー切り替えセクションで瞬時に切り替え可能です。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_gantt_view.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s4_title">ガントタイムラインビュー</div>
+            <div class="snap-path">user_guide_images/screenshot_gantt_view.png</div>
+            <div class="snap-desc" data-i="snap_s4_desc">【キャプチャ対象】X軸が日付タイムラインになり、タスクが横棒グラフとして並んでいるガントビューの全体像。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">📊</div><div class="sc">
+            <strong data-i="s4_graph_main">グラフビュー（📊 グラフ）</strong>
+            <span data-i="s4_graph_main_d">キャンバスにデータを可視化する基本ビューです。軸設定によって次の2つの表示モードに自動で切り替わります。</span>
+            <div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--primary); display: flex; flex-direction: column; gap: 8px;">
+                <div>
+                    <strong style="font-size: 13px; color: var(--text); margin-bottom: 2px;" data-i="s4_graph_net">🌐 ネットワークグラフ表示</strong>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--muted);" data-i="s4_graph_net_d">X軸・Y軸のフィールド設定に従ってノードを2次元グリッド上に配置し、関係性を有向グラフとして可視化します。</p>
+                </div>
+                <div>
+                    <strong style="font-size: 13px; color: var(--text); margin-bottom: 2px;" data-i="s4_graph_gantt">📅 ガントタイムライン表示</strong>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--muted);" data-i="s4_graph_gantt_d">横軸(X)に「日付（期間）型」のフィールドを設定すると、自動的に横軸が時系列カレンダーになり、タスクの期間を横棒で表示するガントビューに切り替わります。</p>
+                </div>
+            </div>
+            
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s4_graph_main.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s4_graph_main.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div></div>
+        <div class="step"><div class="sn">📈</div><div class="sc">
+            <strong data-i="s4_stats_chart">統計グラフビュー（📈 統計グラフ）</strong>
+            <span data-i="s4_stats_chart_d">プロジェクトデータをリアルタイムで集計し、メインキャンバス全体に多様なグラフを描画して視覚的に分析します。グラフ設定は画面左上の設定パネルからいつでも変更可能です。</span>
+            <div style="margin-top: 10px;">
+                <strong style="font-size: 13px; color: var(--text); margin-bottom: 2px;" data-i="s12_chart_h">📈 利用可能なグラフ種別</strong>
+                <table style="margin: 8px 0; font-size: 12px; max-width: 600px;">
+                    <thead><tr><th data-i="chart_type">グラフタイプ</th><th data-i="chart_use">適した用途</th></tr></thead>
+                    <tbody>
+                        <tr><td>📊 <span data-i="ct_bar">棒グラフ</span></td><td data-i="ct_bar_u">カテゴリ別の件数・合計値の比較</td></tr>
+                        <tr><td>🥞 <span data-i="ct_stk">積み上げ棒グラフ</span></td><td data-i="ct_stk_u">カテゴリ内の内訳比較</td></tr>
+                        <tr><td>📈 <span data-i="ct_line">折れ線グラフ</span></td><td data-i="ct_line_u">数値の傾向や推移の確認</td></tr>
+                        <tr><td>🍕 <span data-i="ct_pie">円グラフ</span></td><td data-i="ct_pie_u">全体に占める割合の確認</td></tr>
+                        <tr><td>🍩 <span data-i="ct_donut">ドーナツグラフ</span></td><td data-i="ct_donut_u">割合をスッキリ表示（中心に数値を表示可）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s4_stats_chart.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s4_stats_chart.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div></div>
+    </div>
+    <div class="steps">
+        <div class="step"><div class="sn">📄</div><div class="sc">
+            <strong data-i="s4_table">ノード一覧／フィールド一覧（テーブルビュー）</strong>
+            <span data-i="s4_tabled">すべてのノードやカスタムフィールドの定義をスプレッドシート形式で一覧表示・編集できます。ツールバーの「ノード一覧」「フィールド一覧」からワンクリックでモーダル表示できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s4_table.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s4_table.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+<!-- ─── STEP 5 ─── -->
+<section class="sec" id="s5">
+    <div class="sec-hd">
+        <span class="badge">Step 5</span>
+        <h1 data-i="s5_h1">Undo / Redo（元に戻す・やり直す）</h1>
+        <p data-i="s5_p">すべての操作（ノード追加・削除・フィールド変更・リンク追加など）は操作履歴に記録されており、いつでも安全に取り消し・やり直しができます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_undo_redo.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s5_title">Undo / Redo 操作</div>
+            <div class="snap-path">user_guide_images/screenshot_undo_redo.png</div>
+            <div class="snap-desc" data-i="snap_s5_desc">【キャプチャ対象】ツールバー内の元に戻す（↩）ボタンとやり直す（↪）ボタンの位置が確認できる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s5_undo">元に戻す（Undo）</strong>
+            <span data-i="s5_undod">ツールバーの「↩」ボタン、または <kbd>Ctrl</kbd>+<kbd>Z</kbd> で直前の操作を取り消します。連続して押すことでさらに前の状態へ戻れます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s5_undo.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s5_undo.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s5_redo">やり直す（Redo）</strong>
+            <span data-i="s5_redod">ツールバーの「↪」ボタン、または <kbd>Ctrl</kbd>+<kbd>Y</kbd> で取り消した操作を再度適用します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s5_redo.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s5_redo.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+        <div class="alert warn">
+        <span class="alert-i">⚠️</span>
+        <div><strong data-i="s5_warn_t">テンプレート読み込みはUndoできません</strong>
+        <span data-i="s5_warn_d">テンプレートの読み込み操作、またはデータリセット操作は操作履歴をクリアします。大切なデータは事前に保存してください。</span></div>
+    </div>
+</section>
+
+<!-- ─── STEP 6 ─── -->
+<section class="sec" id="s6">
+    <div class="sec-hd">
+        <span class="badge">Step 6</span>
+        <h1 data-i="s6_h1">カスタムフィールドの定義（4種類のタイプ）</h1>
+        <p data-i="s6_p">右側の「軸コントロールパネル」から独自の属性フィールドを追加・編集し、ノードの持つ情報構造を設計します。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_axis_panel.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s6_title">軸コントロールパネル（フィールド定義一覧）</div>
+            <div class="snap-path">user_guide_images/screenshot_axis_panel.png</div>
+            <div class="snap-desc" data-i="snap_s6_desc">【キャプチャ対象】右側フローティングパネル。各カスタムフィールドの名前・タイプバッジ・編集ボタンが縦に並んでいる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s6_sel">選択肢型（Select）</strong>
+            <span data-i="s6_seld">「ステータス」「役職」「優先度」など定義済みの選択肢から1つを選ぶ形式です。各選択肢に色・形状・拡大率を個別設定でき、X/Y軸・色分け・形状分けに使用できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s6_sel.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s6_sel.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s6_num">数値型（Number）</strong>
+            <span data-i="s6_numd">「進捗率（%）」「スコア」など数値データです。軸にアサインされると最小〜最大値を基準にノードをサイズスケーリング（50〜200%）します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s6_num.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s6_num.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s6_cur">通貨型（Currency）</strong>
+            <span data-i="s6_curd">「予算」「年収」などの金額データです。通貨記号（JPY/USD/EUR等）を設定でき、数値型と同様にサイズスケーリングに対応します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s6_cur.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s6_cur.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">4</div><div class="sc">
+            <strong data-i="s6_date">日付・期間型（Date Period）</strong>
+            <span data-i="s6_dated">「開始日〜終了日」を入力する形式です。ガントビューを描画する際の時間軸スケールとして機能します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s6_date.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s6_date.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 7 ─── -->
+<section class="sec" id="s7">
+    <div class="sec-hd">
+        <span class="badge">Step 7</span>
+        <h1 data-i="s7_h1">選択肢ごとの色・形状・拡大率の設定</h1>
+        <p data-i="s7_p">選択肢型フィールドでは、各選択肢に個別のビジュアルルールを設定し、情報密度と視認性を最大化できます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_field_items.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s7_title">フィールド項目リスト（色・形状・拡大率）</div>
+            <div class="snap-path">user_guide_images/screenshot_field_items.png</div>
+            <div class="snap-desc" data-i="snap_s7_desc">【キャプチャ対象】軸パネル内のフィールド編集ビュー。各選択肢行にカラーピッカー・形状セレクト・拡大率入力欄が並んでいる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s7_col">カラーピッカーで色を設定</strong>
+            <span data-i="s7_cold">各項目行の左端のカラーパレット（■）をクリックして色を選択します。軸設定で「色分け」に割り当てたとき、ノードにその色が適用されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s7_col.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s7_col.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s7_shp">形状（Shape）セレクト</strong>
+            <span data-i="s7_shpd">丸形・四角・三角・ひし形・五角形・六角形・星形・二重丸など多様な幾何学形状を項目ごとに指定します。軸設定で「形状分け」に割り当てたとき反映されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s7_shp.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s7_shp.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s7_siz">拡大率（%）の設定</strong>
+            <span data-i="s7_sizd">項目ごとに 10〜500% の拡大率を数値入力します。例：VP → 300%、Intern → 50%。この設定はフィールドが X 軸または Y 軸に割り当てられたときにのみ描画エンジンへ反映されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s7_siz.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s7_siz.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 8 ─── -->
+<section class="sec" id="s8">
+    <div class="sec-hd">
+        <span class="badge">Step 8</span>
+        <h1 data-i="s8_h1">ドラッグ＆ドロップによる項目の並び替え（軸の順序移動）</h1>
+        <p data-i="s8_p">選択肢型フィールドの項目の並び順を変えることで、グラフ・ガントビューの表示順序をコントロールできます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/demo_reorder.gif" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s8_title">選択肢項目のドラッグ並び替え</div>
+            <div class="snap-path">user_guide_images/demo_reorder.gif</div>
+            <div class="snap-desc" data-i="snap_s8_desc">【キャプチャ対象】ドラッグハンドルを掴んで項目を上下に並び替えている操作中の状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s8_1">ドラッグハンドル <span class="dh">≡</span> を掴む</strong>
+            <span data-i="s8_1d">各選択肢項目の左端にある <span class="dh">≡</span>（ドラッグハンドル）をマウスでクリック&amp;ホールドします。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s8_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s8_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s8_2">上下にドロップして並び替え</strong>
+            <span data-i="s8_2d">ドラッグしたまま目的の位置まで移動してドロップします。グラフのX軸・Y軸の配置順と、ガントビューの行順が即座に更新されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s8_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s8_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 9 ─── -->
+<section class="sec" id="s9">
+    <div class="sec-hd">
+        <span class="badge">Step 9</span>
+        <h1 data-i="s9_h1">軸マッピングと拡大率スケーリングの仕組み</h1>
+        <p data-i="s9_p">各軸（X・Y・色・形状・グループ）に任意のフィールドをアサインすることで、同じデータを複数の切り口から可視化できます。</p>
+    </div>
+
+    <div class="concept">
+        <img src="./user_guide_images/guide_size_scaling_concept.jpg" alt="Size Scaling" onerror="this.src='https://placehold.co/860x300/151d30/f1f5f9?text=Dynamic+Size+Scaling'">
+        <div class="concept-cap" data-i="s9_cap">役職フィールドをY軸に設定した場合のノードサイズ自動スケーリング</div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s9_1">X軸・Y軸にフィールドを設定</strong>
+            <span data-i="s9_1d">軸コントロールパネル上部のドロップダウンで、X軸・Y軸に使用するフィールドを指定します。選択型フィールドなら2次元グリッド、数値型なら連続座標として配置されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s9_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s9_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s9_3">色分け・形状分けのアサイン</strong>
+            <span data-i="s9_3d">「色分け」「形状分け」欄にもフィールドをアサインできます。それぞれ、各選択肢に設定した色・形状がキャンバス上のノードに即時反映されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s9_3.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s9_3.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">💡</div><div class="sc">
+            <strong data-i="s9_2">拡大率の反映タイミング</strong>
+            <span data-i="s9_2d">Step 7で設定した選択肢ごとの拡大率は、<strong>そのフィールドがX軸またはY軸に割り当てられたとき</strong>に初めてノードサイズ（半径）へ適用されます。未割り当ての場合はデフォルトサイズのままです。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s9_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s9_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_size_applied.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s9_title">役職軸を設定した際の拡大率反映結果</div>
+            <div class="snap-path">user_guide_images/screenshot_size_applied.png</div>
+            <div class="snap-desc" data-i="snap_s9_desc">【キャプチャ対象】Y軸を「Job Title」にセットし、VPのノードが極大（300%）、Internのノードが極小（50%）にスケーリングされているキャンバス全体。
+        </div>
+    </div>
+    </div>
+</section>
+
+<!-- ─── STEP 10 ─── -->
+<section class="sec" id="s10">
+    <div class="sec-hd">
+        <span class="badge">Step 10</span>
+        <h1 data-i="s10_h1">グループ枠囲み（Group）</h1>
+        <p data-i="s10_p">軸設定の「枠囲み（G）」項目にフィールドをアサインすると、同じ値を持つノードを自動的に楕円形の枠でグループ化して囲みます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_group.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s10_title">グループ枠囲み表示</div>
+            <div class="snap-path">user_guide_images/screenshot_group.png</div>
+            <div class="snap-desc" data-i="snap_s10_desc">【キャプチャ対象】「部署」フィールドをG軸にアサインし、Engineering・Sales・HR等のグループが楕円の枠で囲まれている様子。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s10_1">G（グループ）軸にフィールドを設定</strong>
+            <span data-i="s10_1d">軸コントロールパネルの「枠囲み(G)」ドロップダウンで選択型フィールドを選びます。同じ選択肢値を持つノード群がまとめて1つの楕円で囲まれます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s10_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s10_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">💡</div><div class="sc">
+            <strong data-i="s10_2">グループ名ラベルが自動表示</strong>
+            <span data-i="s10_2d">各枠の右上にグループ名（選択肢値）が自動的にラベルとして表示されます。グループが増えると視覚的なチームや部署の区別が一目でわかります。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s10_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s10_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 11 ─── -->
+<section class="sec" id="s11">
+    <div class="sec-hd">
+        <span class="badge">Step 11</span>
+        <h1 data-i="s11_h1">フィルタリング（ノードの絞り込み表示）</h1>
+        <p data-i="s11_p">フィルタパネルを使用して、特定の条件に一致するノードのみをキャンバスや統計に反映させることができます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_filters.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s11_title">フィルタリングパネル</div>
+            <div class="snap-path">user_guide_images/screenshot_filters.png</div>
+            <div class="snap-desc" data-i="snap_s11_desc">【キャプチャ対象】特定の部署やステータスをチェックオン/オフして表示ノードを絞り込んでいるフィルタパネルの状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s11_1">ノード名で絞り込み</strong>
+            <span data-i="s11_1d">フィルタパネルのノード検索欄に名前を入力すると、一致するノードのみがキャンバスに残ります。「すべて選択」「すべて解除」ボタンで一括操作できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s11_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s11_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s11_2">フィールド値で絞り込み</strong>
+            <span data-i="s11_2d">各フィールドの選択肢をチェックボックスでON/OFFすることで、特定の部署・優先度・ステータスに属するノードのみを表示に絞り込めます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s11_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s11_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s11_3">フィルタのリセット</strong>
+            <span data-i="s11_3d">「すべてのフィルタをリセット」ボタンで、適用中のすべての絞り込み条件を一度に解除します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s11_3.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s11_3.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 12 ─── -->
+<section class="sec" id="s12">
+    <div class="sec-hd">
+        <span class="badge">Step 12</span>
+        <h1 data-i="s12_h1">統計情報パネル（数値集計）</h1>
+        <p data-i="s12_p">画面右側の「📊 統計情報」パネルでは、現在のプロジェクトデータ（ノード総数や、各フィールド項目のデータ件数分布など）をリアルタイムで集計し、数値（テキスト）として一目で確認できます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_stats_panel.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s12_title">統計情報パネル</div>
+            <div class="snap-path">user_guide_images/screenshot_stats_panel.png</div>
+            <div class="snap-desc" data-i="snap_s12_desc">【キャプチャ対象】画面右側の「📊 統計情報」パネルが表示され、ノード件数や選択肢ごとの分布テキストが確認できる状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s12_1">リアルタイム集計値の確認</strong>
+            <span data-i="s12_1d">キャンバス上でノードの追加・削除やフィールド値の変更を行うと、パネル内の集計数値が即座に同期して更新されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s12_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s12_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s12_2">フィルタリングとの連動</strong>
+            <span data-i="s12_2d">フィルタパネルで表示ノードを絞り込んでいる場合、統計情報パネルの集計値も現在表示されているノードのみを対象とした数値に自動で切り替わります。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s12_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s12_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 13 ─── -->
+<section class="sec" id="s13">
+    <div class="sec-hd">
+        <span class="badge">Step 13</span>
+        <h1 data-i="s13_h1">凡例パネルとキャンバス内ノード検索</h1>
+        <p data-i="s13_p">大量のノードを扱う際も、凡例と検索機能で素早く目的のノードを特定できます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_legend_search.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s13_title">凡例とキャンバス内ノード検索</div>
+            <div class="snap-path">user_guide_images/screenshot_legend_search.png</div>
+            <div class="snap-desc" data-i="snap_s13_desc">【キャプチャ対象】画面左下の凡例表示と、上部ツールバーの検索窓に入力して該当ノードが強調表示されている状態。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">📋</div><div class="sc">
+            <strong data-i="s13_leg">凡例パネル（Legend）</strong>
+            <span data-i="s13_legd">現在の「色分け」「形状分け」設定に基づいた凡例（色/形とその値のラベル）が一覧表示されます。どの色や形が何を意味するか即座に確認できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s13_leg.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s13_leg.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">🔍</div><div class="sc">
+            <strong data-i="s13_search">グラフ内ノード検索（キャンバス検索）</strong>
+            <span data-i="s13_searchd">ツールバーの検索ボックスにノード名を入力すると、一致するノードがキャンバス上でハイライトされ、自動的に画面中央にスクロール・フォーカスされます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s13_search.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s13_search.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 14 ─── -->
+<section class="sec" id="s14">
+    <div class="sec-hd">
+        <span class="badge">Step 14</span>
+        <h1 data-i="s14_h1">一括編集（Bulk Edit）</h1>
+        <p data-i="s14_p">複数のノードを同時に選択し、フィールド値の一括変更や一括削除が行えます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/demo_bulk_edit.gif" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s14_title">複数選択と一括編集</div>
+            <div class="snap-path">user_guide_images/demo_bulk_edit.gif</div>
+            <div class="snap-desc" data-i="snap_s14_desc">【キャプチャ対象】Shift+ドラッグで複数選択したノードと、右側に表示された「一括編集」パネルでの変更設定画面。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s14_1">複数ノードの選択</strong>
+            <span data-i="s14_1d">ノード管理パネルのチェックボックスで複数のノードを選択するか、キャンバス上でドラッグ選択（ラバーバンド選択）により複数ノードをまとめて選びます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s14_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s14_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s14_2">「👥 一括編集」パネルの操作</strong>
+            <span data-i="s14_2d">選択後、「一括値変更」から対象フィールドと設定値を指定すると、選択した全ノードのその属性値が一度に書き換わります。大量ノードの属性を効率よく修正できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s14_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s14_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s14_3">一括削除</strong>
+            <span data-i="s14_3d">「削除」ボタンを押すと選択中のノードが全件削除されます。操作後は <kbd>Ctrl</kbd>+<kbd>Z</kbd> で元に戻せます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s14_3.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s14_3.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 15 ─── -->
+<section class="sec" id="s15">
+    <div class="sec-hd">
+        <span class="badge">Step 15</span>
+        <h1 data-i="s15_h1">マルチプロジェクトとグラフタブ管理</h1>
+        <p data-i="s15_p">1つのセッションで複数のプロジェクトと、プロジェクトごとに複数のグラフ（ビュー設定）を並行して管理できます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_projects.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s15_title">マルチプロジェクトとグラフタブ管理</div>
+            <div class="snap-path">user_guide_images/screenshot_projects.png</div>
+            <div class="snap-desc" data-i="snap_s15_desc">【キャプチャ対象】上部の「プロジェクト切り替え」プルダウンメニューと、現在のプロジェクトに属する複数の「グラフタブ」が並ぶ様子。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">🗂</div><div class="sc">
+            <strong data-i="s15_proj">プロジェクトの切り替え</strong>
+            <span data-i="s15_projd">ツールバー左側の「プロジェクト一覧」から複数のプロジェクトを切り替えて作業できます。各プロジェクトは独自のノードセット・フィールド定義・グラフ設定を保持します。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s15_proj.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s15_proj.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">📑</div><div class="sc">
+            <strong data-i="s15_graph">グラフタブ（複数ビュー保存）</strong>
+            <span data-i="s15_graphd">同一プロジェクト内で「グラフタブ」を複数作成し、それぞれ異なるX/Y軸・色分け・グループ設定を保存しておけます。例：「部署別ビュー」と「役職別ビュー」を切り替えて使用できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s15_graph.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s15_graph.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+</section>
+
+<!-- ─── STEP 16 ─── -->
+<section class="sec" id="s16">
+    <div class="sec-hd">
+        <span class="badge">Step 16</span>
+        <h1 data-i="s16_h1">プロジェクトの暗号化保存とロード</h1>
+        <p data-i="s16_p">プロジェクトファイル（.mnsb）をローカルに出力して保存します。機密情報を含む場合は強固なパスワード暗号化をかけることができます。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_encryption.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s16_title">暗号化保存とパスワード解除モーダル</div>
+            <div class="snap-path">user_guide_images/screenshot_encryption.png</div>
+            <div class="snap-desc" data-i="snap_s16_desc">【キャプチャ対象】保存ダイアログの「パスワードを設定する」オプションと、暗号化ファイル読込時に表示されるパスワード入力モーダル。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s16_save">プロジェクトの保存（.mnsb 出力）</strong>
+            <span data-i="s16_saved">ツールバーの「💾 保存」ボタンを押すと保存モーダルが開きます。ファイル名を確認後「保存」を押すと、プロジェクトデータが <code>.mnsb</code> 形式でダウンロードされます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s16_save.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s16_save.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s16_pass">パスワード暗号化の設定</strong>
+            <span data-i="s16_passd">保存モーダルで「パスワードを設定して保存する」をONにしてパスワードを2回入力します。クライアント側で暗号化されたファイルが出力されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s16_pass.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s16_pass.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">3</div><div class="sc">
+            <strong data-i="s16_load">暗号化ファイルの読み込み</strong>
+            <span data-i="s16_loadd">暗号化済み <code>.mnsb</code> ファイルを開こうとすると「パスワード解除モーダル」が自動で起動します。正しいパスワードを入力することで復号・ロードされます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s16_load.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s16_load.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+    <div class="alert warn">
+        <span class="alert-i">⚠️</span>
+        <div><strong data-i="s16_warn_t">パスワードは絶対に管理してください</strong>
+        <span data-i="s16_warn_d">パスワードはアプリ側では一切保持されません。パスワードを紛失した場合、プロジェクトデータの復元は不可能です。</span></div>
+    </div>
+</section>
+
+<!-- ─── STEP 17 ─── -->
+<section class="sec" id="s17">
+    <div class="sec-hd">
+        <span class="badge">Step 17</span>
+        <h1 data-i="s17_h1">CSV インポート / エクスポートとバリデーション <span class="pro">👑 Premium</span></h1>
+        <p data-i="s17_p">有料版では、ノードデータとフィールド定義をCSV形式でExcel等の外部システムと相互交換できます。インポート時は自動データ検証が走ります。</p>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">📥</div><div class="sc">
+            <strong data-i="s17_imp">ノードリストのCSVインポート</strong>
+            <span data-i="s17_impd">テーブルビューの「ノード」タブにある「⬆️ CSV読み込み」ボタンからCSVを選択します。ヘッダー行がフィールド名と自動マッチングされ、データが一括インポートされます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s17_imp.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s17_imp.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">📤</div><div class="sc">
+            <strong data-i="s17_exp">ノードリストのCSVエクスポート</strong>
+            <span data-i="s17_expd">「⬇️ CSV書き出し」ボタンで、現在のノード一覧（全フィールド含む）をCSV形式でダウンロードします。Excelやスプレッドシートで編集後に再インポートできます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s17_exp.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s17_exp.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">📋</div><div class="sc">
+            <strong data-i="s17_mast">フィールド定義のCSV連携</strong>
+            <span data-i="s17_mastd">「フィールド」タブの CSV読み込み/書き出しでは、フィールド名・タイプ・選択肢定義などのマスターデータをCSVで一括管理できます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s17_mast.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s17_mast.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">⚠️</div><div class="sc">
+            <strong data-i="s17_val">バリデーションエラーモーダル</strong>
+            <span data-i="s17_vald">インポート時に型エラー（日付欄に文字列・数値欄に非数値・選択肢外の値など）が検出された場合、自動でエラーモーダルが起動し、「ノードID / フィールド名 / 入力値 / エラー理由」が表形式で一覧表示されます。エラー箇所は安全なデフォルト値に自動補正されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s17_val.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s17_val.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_csv_error.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s17_title">CSVバリデーションエラーダイアログ</div>
+            <div class="snap-path">user_guide_images/screenshot_csv_error.png</div>
+            <div class="snap-desc" data-i="snap_s17_desc">【キャプチャ対象】CSVインポート後に自動起動するエラーモーダル。テーブル形式でエラー箇所（ノードID・フィールド・インポートされた値・理由）が一覧表示されている状態。
+        </div>
+    </div>
+    </div>
+</section>
+
+<!-- ─── STEP 18 ─── -->
+<section class="sec" id="s18">
+    <div class="sec-hd">
+        <span class="badge">Step 18</span>
+        <h1 data-i="s18_h1">グラフの画像エクスポート（PNG / SVG）<span class="pro">👑 Premium</span></h1>
+        <p data-i="s18_p">有料版では、現在のキャンバスに表示されているグラフを高解像度の画像ファイルとして出力できます。プレゼンや報告書への貼り付けに最適です。</p>
+    </div>
+
+    <div class="snap">
+        <img src="./user_guide_images/screenshot_export.png" alt="Screenshot" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <span class="snap-icon">📸</span>
+        <div class="snap-title" data-i="snap_s18_title">画像エクスポートと保存モーダル</div>
+            <div class="snap-path">user_guide_images/screenshot_export.png</div>
+            <div class="snap-desc" data-i="snap_s18_desc">【キャプチャ対象】「グラフを保存」ボタン押下時に起動する、出力形式（PNG / SVG）選択ダイアログ。
+        </div>
+    </div>
+    </div>
+
+    <div class="steps">
+        <div class="step"><div class="sn">1</div><div class="sc">
+            <strong data-i="s18_1">「🖼️ グラフを保存」ボタンをクリック</strong>
+            <span data-i="s18_1d">ツールバーの「🖼️ グラフを保存」ボタンを押すと、出力フォーマット選択モーダルが開きます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s18_1.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s18_1.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+        <div class="step"><div class="sn">2</div><div class="sc">
+            <strong data-i="s18_2">PNG または SVG を選択してダウンロード</strong>
+            <span data-i="s18_2d">「PNG形式で保存」を選ぶと高解像度のラスター画像（ビットマップ）が、「SVG形式で保存」を選ぶとスケーラブルなベクター画像が出力されます。</span>
+        
+            <details class="hint-details">
+                <summary class="hint-summary">
+                    <span data-i="hint_view">💡 操作イメージ（GIF動画）を見る</span>
+                </summary>
+                <div class="hint-content">
+                    <div class="snap">
+                        <img src="./user_guide_images/gif_s18_2.gif" alt="Demo" onload="this.style.display='block'; this.nextElementSibling.style.display='none'; this.parentElement.style.border='none'; this.parentElement.style.padding='0'; this.parentElement.style.background='transparent';" style="display:none; width:100%; border-radius:var(--r-md);">
+                        <div class="snap-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+                            <span class="snap-icon">📸</span>
+                            <div class="snap-title" data-i="snap_title">デモ動画の配置プレースホルダー</div>
+                            <div class="snap-path">user_guide_images/gif_s18_2.gif</div>
+                            <div class="snap-desc" data-i="snap_desc">【キャプチャ対象】この手順の操作画面を撮影した短いGIF動画</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+</div></div>
+    </div>
+
+    <div class="alert tip">
+        <span class="alert-i">💡</span>
+        <div><strong data-i="s18_tip_t">SVGはそのまま編集可能</strong>
+        <span data-i="s18_tip_d">SVG形式で出力したファイルは、Illustrator・Inkscape・Figmaなどのベクターグラフィックツールでそのままレイアウト編集することができます。</span></div>
+    </div>
+</section>
+
+</main>
+</div><!-- /.wrap -->
+
+<footer>
+    <p>&copy; 2026 MultiNode Sync Builder. All Rights Reserved.</p>
+    <p data-i="footer">本ガイドは MultiNode Sync Builder の全機能を網羅したユーザー向けリファレンスです。</p>
+</footer>
+
+<!-- ═══════════ i18n ═══════════ -->
+<script>
+const T = {
+ja:{
+  cat0:"1. 概要 &amp; 仕様", cat1:"2. 基本操作", cat2:"3. 応用カスタマイズ", cat3:"4. 分析 &amp; 検索", cat4:"5. データ管理 &amp; 有料機能",
+  m_intro:"概要と無料/有料比較", m_s1:"Step 1: 起動 &amp; テンプレート", m_s2:"Step 2: ノードの基本操作", m_s3:"Step 3: リンクの作成",
+  m_s4:"Step 4: ビュー切り替え", m_s5:"Step 5: Undo / Redo", m_s6:"Step 6: フィールド定義", m_s7:"Step 7: 選択肢の色・形・拡大率",
+  m_s8:"Step 8: ドラッグ並び替え", m_s9:"Step 9: 軸マッピングと拡大率", m_s10:"Step 10: グループ枠囲み",
+  m_s11:"Step 11: フィルタリング", m_s12:"Step 12: 統計パネル", m_s13:"Step 13: 凡例 &amp; 検索",
+  m_s14:"Step 14: 一括編集", m_s15:"Step 15: プロジェクト管理", m_s16:"Step 16: 暗号化保存",
+  m_s17:"Step 17: CSV連携 &amp; 検証", m_s18:"Step 18: 画像エクスポート",
+  badge_intro:"概要",
+  m_download:"アプリのダウンロード",
+  dl_h1:"MultiNode Sync Builder のダウンロード",
+  dl_p:"MultiNode Sync Builder は Microsoft Store より安全にインストール・アップデートが可能です。以下のいずれかの方法でダウンロードページへアクセスしてください。",
+  dl_deep_title:"Microsoft Store アプリで開く",
+  dl_deep_desc:"Windows 10 または 11 をご利用の場合に最適です。PCのストアアプリが直接起動し、ワンクリックでインストールできます。",
+  dl_deep_btn:"🛍️ ストアアプリを起動",
+  dl_web_title:"ウェブブラウザで開く",
+  dl_web_desc:"ブラウザ上で Microsoft Store の製品詳細情報を確認したい場合や、ストアアプリが正常に起動しない場合はこちらをご利用ください。",
+  dl_web_btn:"🌐 ウェブストアを開く",
+  hint_view:"💡 操作イメージ（GIF動画）を見る",
+  snap_title:"デモ動画の配置プレースホルダー",
+  snap_desc:"この手順の操作画面を撮影した短いGIF動画",
+  guide_def_title:"💡 機能・仕様の定義",
+  guide_op_title:"🚀 操作手順",
+  intro_h1:"MultiNode Sync Builder 全機能ガイド",
+  intro_p:"本アプリは、人・システム・タスクなど多様な「ノード」をキャンバスに配置し、それらの相互関係（リンク）をネットワークグラフやガントタイムラインとして可視化する統合データマッピングプラットフォームです。各ノードが持つ「フィールド属性」に応じてサイズ・色・形状・座標が自動スケーリングされます。",
+  intro_cap:"アプリの動的な操作感とノード関係の可視化を示すデモ画面",
+  intro_compare_h:"👑 無料版 vs 有料版（Premium）仕様比較",
+  intro_compare_p:"有料版にアップグレードすることで、以下のすべての制限が解除され、CSVや画像出力などの高度な機能が利用可能になります。",
+  th_feat:"機能 / 制限", th_free:"無料版", th_pro:"有料版 👑",
+  r_nodes:"ノード登録数", r_nodes_f:"最大 7 個", r_unlimited:"無制限",
+  r_fields:"カスタムフィールド数", r_fields_f:"最大 3 個",
+  r_items:"フィールド内選択肢数", r_items_f:"最大 5 個",
+  r_csv:"CSV インポート / エクスポート", r_csv_f:"❌", r_csv_p:"🟢 バリデーション機能付き",
+  r_img:"グラフ画像エクスポート（PNG/SVG）", r_img_f:"❌", r_img_p:"🟢 高解像度出力対応",
+  intro_shortcut_h:"⌨️ キーボードショートカット早見表",
+  kb_op:"操作", kb_key:"キー",
+  kb_undo:"元に戻す", kb_redo:"やり直す", kb_del:"選択ノードを削除",
+  kb_save:"プロジェクトの保存", kb_saveas:"名前を付けて保存", kb_open:"プロジェクトを開く",
+  kb_new:"新規プロジェクト作成", kb_find:"ノード検索", kb_selectall:"すべてのノードを選択", kb_help:"ヘルプを表示",
+  s1_h1:"起動とテンプレート読み込み",
+  s1_p:"アプリを起動すると「スタートアップダッシュボード」が開き、言語設定・テンプレート選択・既存プロジェクトの読み込みをすぐに行えます。",
+  snap_s1_title:"起動時ダッシュボードモーダル",
+  snap_s1_desc:"【キャプチャ対象】起動時モーダル全体。言語トグル（EN/JA）、「以前のファイルを開く」ボタン、テンプレートカード一覧（9-Box・Gantt・Risk等）が確認できる状態。",
+  s1_1:"言語の切り替え", s1_1d:"起動モーダル右上の「EN/JA」トグルで、全UIテキストを日英でリアルタイム切替できます。アプリメイン画面右端にも同じトグルが常時表示されています。",
+  s1_2:"プロジェクトファイル（.mnsb）の読み込み", s1_2d:"「以前エクスポートしたプロジェクトを開く」をクリックし、保存済みの .mnsb ファイルをインポートして作業を再開します。暗号化済みファイルの場合はパスワード入力モーダルが自動起動します。",
+  s1_3:"テンプレートの選択と読み込み", s1_3d:"「9-Box Talent Grid」「Gantt &amp; Kanban」「Risk Assessment Matrix」「Value vs Effort」「System Architecture Map」「Customer Journey Map」の6テンプレートから選択。無料版ではノード数・フィールド数を自動削減した簡易版が読み込まれます。",
+  s1_4:"0から新規プロジェクトを作成", s1_4d:"ダッシュボードの「0から作成」ボタンをクリックするか、またはメニューバーの「File」>「New」（あるいは Ctrl+N）を実行することで、テンプレートを使わずに空のプロジェクトを新規作成できます。ノードやカスタムフィールドを自由に設計したい場合に最適です。",
+  s1_tip_t:"ツールバー「テンプレート」からも随時追加", s1_tip_d:"起動後も画面上部ツールバーの「テンプレート▾」ボタンから、いつでも任意のテンプレートを追加プロジェクトとして読み込めます。",
+  s2_h1:"ノード（人・タスク・システム）の操作",
+  s2_p:"アプリの中心となる「ノード」の作成・編集・削除方法を学びます。",
+  snap_s2_title:"メインキャンバスとノード管理パネル",
+  snap_s2_desc:"【キャプチャ対象】中央D3キャンバス（ノード＆リンク）と、左の「ノード管理パネル」（追加入力欄・顔写真サムネイルリスト）が同時に見える状態。",
+  s2_a:"新規ノードの追加", s2_ad:"グラフキャンバス上の背景をダブルクリックするか、またはテーブル（ノード一覧）の「新規追加」ボタンを押すことでノードを作成できます。",
+  s2_b:"詳細情報の編集と画像の設定（クリック）", s2_bd:"ノードをクリックすると「詳細パネル」が開きます。ノード名、個別サイズ、フィールド値、関連設定（リンク一覧）、画像、メモを上から順に確認・編集できます。画像は「画像を選択」ボタンからファイル選択ダイアログ経由で設定します。画像設定後は「編集」ボタンから「画像調整」モーダルを起動し、スライダーでズーム（0.2〜5.0倍）や表示位置（X/Yオフセット）を微調整できます。設定した画像はノードの形状に合わせて自動でクリッピングされます。",
+  s2_d:"ノードの削除", s2_dd:"ノード管理パネルのゴミ箱アイコン、またはノード選択後に Delete キーで削除。誤操作時は Ctrl+Z で即座に復元できます。",
+  s3_h1:"リンク（関係性）の作成と自動太さ調整",
+  s3_p:"ノード間の繋がりをビジュアルに描画します。リンクの太さは接続されたノードの数に応じて自動調整されます。",
+  s3_1:"ドラッグ接続でリンクを作成", s3_1d:"ノードをホバーすると右端に「接続ハンドル（●）」が現れます。これをドラッグして別のノードへ繋げばリンクが生成されます。また、テーブルビューや詳細パネルからも追加できます。",
+  s3_3:"接続数に応じた線の太さの自動調整", s3_3d:"接続されている両端のノードの合計リンク数（次数）の平均値に基づいて、線の太さが自動的に 1.5px から 6px までスケーリングされます。これによりハブノード間の主要な関係性が視覚的に強調されます。",
+  snap_s3_title:"リンクの作成と削除",
+  snap_s3_desc:"【録画対象】ノード間のドラッグ接続によるリンク作成と、ホバー時の×ボタンでの削除操作。",
+  s4_h1:"ビュー（表示形式）の切り替え",
+  s4_p:"同じデータを「グラフ」「統計グラフ」「ノード一覧」「フィールド一覧」の4つの表示モードで確認・分析・編集できます。ツールバー中央のビュー切り替えセクションで瞬時に切り替え可能です。",
+  snap_s4_title:"ガントタイムラインビュー",
+  snap_s4_desc:"【キャプチャ対象】X軸が日付タイムラインになり、タスクが横棒グラフとして並んでいるガントビューの全体像。",
+  s4_graph_main:"グラフビュー（📊 グラフ）",
+  s4_graph_main_d:"キャンバスにデータを可視化する基本ビューです。軸設定の内容により、以下の2つの表示モードへ自動で切り替わります。",
+  s4_graph_net:"🌐 ネットワークグラフ表示",
+  s4_graph_net_d:"X軸・Y軸のフィールド設定に従ってノードを2次元グリッド上に配置し、関係性を有向グラフとして可視化します。ノードのドラッグ固定も可能です。",
+  s4_graph_gantt:"📅 ガントタイムライン表示",
+  s4_graph_gantt_d:"横軸(X)に「日付（期間）型」フィールドを設定すると、自動的に横軸が時系列カレンダーになり、ノードが期間を表すバーとして描画されます。",
+  s4_stats_chart:"統計グラフビュー（📈 統計グラフ）",
+  s4_stats_chart_d:"プロジェクトデータをリアルタイムで集計し、メインキャンバス全体に多様なグラフを描画して視覚的に分析します。グラフ設定は画面左上の設定パネルからいつでも変更可能です。",
+  s4_table:"ノード一覧／フィールド一覧（テーブルビュー）", s4_tabled:"すべてのノードやカスタムフィールドの定義をスプレッドシート形式で一覧表示・編集できます。ツールバーの「ノード一覧」「フィールド一覧」からワンクリックでモーダル表示できます。",
+  s5_h1:"Undo / Redo（元に戻す・やり直す）",
+  s5_p:"すべての操作（ノード追加・削除・フィールド変更・リンク追加など）は操作履歴に記録されており、いつでも安全に取り消し・やり直しができます。",
+  s5_undo:"元に戻す（Undo）", s5_undod:"ツールバーの「↩」ボタン、または Ctrl+Z で直前の操作を取り消します。連続して押すことでさらに前の状態へ戻れます。",
+  s5_redo:"やり直す（Redo）", s5_redod:"ツールバーの「↪」ボタン、または Ctrl+Y で取り消した操作を再度適用します。",
+  snap_s5_title:"Undo / Redo 操作",
+  snap_s5_desc:"【キャプチャ対象】ツールバー内の元に戻す（↩）ボタンとやり直す（↪）ボタンの位置が確認できる状態。",
+  s5_warn_t:"テンプレート読み込みはUndoできません", s5_warn_d:"テンプレートの読み込み操作、またはデータリセット操作は操作履歴をクリアします。大切なデータは事前に保存してください。",
+  s6_h1:"カスタムフィールドの定義（4種類のタイプ）",
+  s6_p:"右側の「軸コントロールパネル」から独自の属性フィールドを追加・編集し、ノードの持つ情報構造を設計します。",
+  snap_s6_title:"軸コントロールパネル（フィールド定義一覧）",
+  snap_s6_desc:"【キャプチャ対象】右側フローティングパネル。各カスタムフィールドの名前・タイプバッジ・編集ボタンが縦に並んでいる状態。",
+  s6_sel:"選択肢型（Select）", s6_seld:"「ステータス」「役職」「優先度」など定義済みの選択肢から1つを選ぶ形式です。各選択肢に色・形状・拡大率を個別設定でき、X/Y軸・色分け・形状分けに使用できます。",
+  s6_num:"数値型（Number）", s6_numd:"「進捗率（%）」「スコア」など数値データです。軸にアサインされると最小〜最大値を基準にノードをサイズスケーリング（50〜200%）します。",
+  s6_cur:"通貨型（Currency）", s6_curd:"「予算」「年収」などの金額データです。通貨記号（JPY/USD/EUR等）を設定でき、数値型と同様にサイズスケーリングに対応します。",
+  s6_date:"日付・期間型（Date Period）", s6_dated:"「開始日〜終了日」を入力する形式です。ガントビューを描画する際の時間軸スケールとして機能します。",
+  s7_h1:"選択肢ごとの色・形状・拡大率の設定",
+  s7_p:"選択肢型フィールドでは、各選択肢に個別のビジュアルルールを設定し、情報密度と視認性を最大化できます。",
+  snap_s7_title:"フィールド項目リスト（色・形状・拡大率）",
+  snap_s7_desc:"【キャプチャ対象】軸パネル内のフィールド編集ビュー。各選択肢行にカラーピッカー・形状セレクト・拡大率入力欄が並んでいる状態。",
+  s7_col:"カラーピッカーで色を設定", s7_cold:"各項目行の左端のカラーパレット（■）をクリックして色を選択します。軸設定で「色分け」に割り当てたとき、ノードにその色が適用されます。",
+  s7_shp:"形状（Shape）セレクト", s7_shpd:"丸形・四角・三角・ひし形・五角形・六角形・星形・二重丸など多様な幾何学形状を項目ごとに指定します。軸設定で「形状分け」に割り当てたとき反映されます。",
+  s7_siz:"拡大率（%）の設定", s7_sizd:"項目ごとに 10〜500% の拡大率を数値入力します。例：VP → 300%、Intern → 50%。この設定はフィールドが X 軸または Y 軸に割り当てられたときにのみ描画エンジンへ反映されます。",
+  s8_h1:"ドラッグ＆ドロップによる項目の並び替え（軸の順序移動）",
+  s8_p:"選択肢型フィールドの項目の並び順を変えることで、グラフ・ガントビューの表示順序をコントロールできます。",
+  snap_s8_title:"選択肢項目のドラッグ並び替え",
+  snap_s8_desc:"【録画対象】ドラッグハンドルを掴んで項目を上下に並び替え、グラフ軸やガントの並び順がリアルタイムに更新される様子。",
+  s8_1:"ドラッグハンドル ≡ を掴む", s8_1d:"各選択肢項目の左端にある ≡（ドラッグハンドル）をマウスでクリック＆ホールドします。",
+  s8_2:"上下にドロップして並び替え", s8_2d:"ドラッグしたまま目的の位置まで移動してドロップします。グラフのX軸・Y軸の配置順と、ガントビューの行順が即座に更新されます。",
+  s9_h1:"軸マッピングと拡大率スケーリングの仕組み",
+  s9_p:"各軸（X・Y・色・形状・グループ）に任意のフィールドをアサインすることで、同じデータを複数の切り口から可視化できます。",
+  s9_cap:"役職フィールドをY軸に設定した場合のノードサイズ自動スケーリング",
+  s9_1:"X軸・Y軸にフィールドを設定", s9_1d:"軸コントロールパネル上部のドロップダウンで、X軸・Y軸に使用するフィールドを指定します。選択型フィールドなら2次元グリッド、数値型なら連続座標として配置されます。",
+  s9_2:"拡大率の反映トリガー", s9_2d:"Step 7で設定した選択肢ごとの拡大率は、そのフィールドがX軸またはY軸に割り当てられたときに初めてノードサイズ（半径）へ適用されます。未割り当ての場合はデフォルトサイズのままです。",
+  s9_3:"色分け・形状分けのアサイン", s9_3d:"「色分け」「形状分け」欄にもフィールドをアサインできます。それぞれ、各選択肢に設定した色・形状がキャンバス上のノードに即時反映されます。",
+  snap_s9_title:"役職軸を設定した際の拡大率反映結果",
+  snap_s9_desc:"【キャプチャ対象】Y軸を「Job Title」にセットし、VPのノードが極大（300%）、Internのノードが極小（50%）にスケーリングされているキャンバス全体。",
+  s10_h1:"グループ枠囲み（Group）",
+  s10_p:"軸設定の「枠囲み（G）」項目にフィールドをアサインすると、同じ値を持つノードを自動的に楕円形の枠でグループ化して囲みます。",
+  snap_s10_title:"グループ枠囲み表示",
+  snap_s10_desc:"【キャプチャ対象】「部署」フィールドをG軸にアサインし、Engineering・Sales・HR等のグループが楕円の枠で囲まれている様子。",
+  s10_1:"G（グループ）軸にフィールドを設定", s10_1d:"軸コントロールパネルの「枠囲み(G)」ドロップダウンで選択型フィールドを選びます。同じ選択肢値を持つノード群がまとめて1つの楕円で囲まれます。",
+  s10_2:"グループ名の表示", s10_2d:"各枠の右上にグループ名（選択肢値）が自動的にラベルとして表示されます。グループが増えると視覚的なチームや部署の区別が一目でわかります。",
+  s11_h1:"フィルタリング（ノードの絞り込み表示）",
+  s11_p:"フィルタパネルを使用して、特定の条件に一致するノードのみをキャンバスや統計に反映させることができます。",
+  snap_s11_title:"フィルタリングパネル",
+  snap_s11_desc:"【キャプチャ対象】特定の部署やステータスをチェックオン/オフして表示ノードを絞り込んでいるフィルタパネルの状態。",
+  s11_1:"ノード名で絞り込み", s11_1d:"フィルタパネルのノード検索欄に名前を入力すると、一致するノードのみがキャンバスに残ります。「すべて選択」「すべて解除」ボタンで一括操作できます。",
+  s11_2:"フィールド値で絞り込み", s11_2d:"各フィールドの選択肢をチェックボックスでON/OFFすることで、特定の部署・優先度・ステータスに属するノードのみを表示に絞り込めます。",
+  s11_3:"フィルタのリセット", s11_3d:"「すべてのフィルタをリセット」ボタンで、適用中のすべての絞り込み条件を一度に解除します。",
+  s12_h1:"統計情報パネル（数値集計）",
+  s12_p:"画面右側の「📊 統計情報」パネルでは、現在のプロジェクトデータ（ノード総数や、各フィールド項目のデータ件数分布など）をリアルタイムで集計し、数値（テキスト）として一目で確認できます。",
+  snap_s12_title:"統計情報パネル",
+  snap_s12_desc:"【キャプチャ対象】画面右側の「📊 統計情報」パネルが表示され、ノード件数や選択肢ごとの分布テキストが確認できる状態。",
+  s12_chart_h:"📈 利用可能なグラフ種別",
+  chart_type:"グラフタイプ", chart_use:"適した用途",
+  ct_bar:"棒グラフ", ct_bar_u:"カテゴリ別の件数・合計値の比較",
+  ct_stk:"積み上げ棒グラフ", ct_stk_u:"カテゴリ内の内訳比較",
+  ct_line:"折れ線グラフ", ct_line_u:"数値の傾向や推移の確認",
+  ct_pie:"円グラフ", ct_pie_u:"全体に占める割合の確認",
+  ct_donut:"ドーナツグラフ", ct_donut_u:"割合をスッキリ表示（中心に数値を表示可）",
+  s12_1:"リアルタイム集計値の確認", s12_1d:"キャンバス上でノードの追加・削除やフィールド値の変更を行うと、パネル内の集計数値が即座に同期して更新されます。",
+  s12_2:"フィルタリングとの連動", s12_2d:"フィルタパネルで表示ノードを絞り込んでいる場合、統計情報パネルの集計値も現在表示されているノードのみを対象とした数値に自動で切り替わります。",
+  s13_h1:"凡例パネルとキャンバス内ノード検索",
+  s13_p:"大量のノードを扱う際も、凡例と検索機能で素早く目的のノードを特定できます。",
+  snap_s13_title:"凡例とキャンバス内ノード検索",
+  snap_s13_desc:"【キャプチャ対象】画面左下の凡例表示と、上部ツールバーの検索窓に入力して該当ノードが強調表示されている状態。",
+  s13_leg:"凡例パネル（Legend）", s13_legd:"現在の「色分け」「形状分け」設定に基づいた凡例（色/形とその値のラベル）が一覧表示されます。どの色や形が何を意味するか即座に確認できます。",
+  s13_search:"グラフ内ノード検索", s13_searchd:"ツールバーの検索ボックスにノード名を入力すると、一致するノードがキャンバス上でハイライトされ、自動的に画面中央にスクロール・フォーカスされます。",
+  s14_h1:"一括編集（Bulk Edit）",
+  s14_p:"複数のノードを同時に選択し、フィールド値の一括変更や一括削除が行えます。",
+  snap_s14_title:"複数選択と一括編集",
+  snap_s14_desc:"【録画対象】Shift+ドラッグによる複数ノードの選択と、一括編集パネルを使ったフィールド値の一括更新操作。",
+  s14_1:"複数ノードの選択", s14_1d:"ノード管理パネルのチェックボックスで複数のノードを選択するか、キャンバス上でドラッグ選択（ラバーバンド選択）により複数ノードをまとめて選びます。",
+  s14_2:"「👥 一括編集」パネルの操作", s14_2d:"選択後、「一括値変更」から対象フィールドと設定値を指定すると、選択した全ノードのその属性値が一度に書き換わります。大量ノードの属性を効率よく修正できます。",
+  s14_3:"一括削除", s14_3d:"「削除」ボタンを押すと選択中のノードが全件削除されます。操作後は Ctrl+Z で元に戻せます。",
+  s15_h1:"マルチプロジェクトとグラフタブ管理",
+  s15_p:"1つのセッションで複数のプロジェクトと、プロジェクトごとに複数のグラフ（ビュー設定）を並行して管理できます。",
+  snap_s15_title:"マルチプロジェクトとグラフタブ管理",
+  snap_s15_desc:"【キャプチャ対象】上部の「プロジェクト切り替え」プルダウンメニューと、現在のプロジェクトに属する複数の「グラフタブ」が並ぶ様子。",
+  s15_proj:"プロジェクトの切り替え", s15_projd:"ツールバー左側の「プロジェクト一覧」から複数のプロジェクトを切り替えて作業できます。各プロジェクトは独自のノードセット・フィールド定義・グラフ設定を保持します。",
+  s15_graph:"グラフタブ（複数ビュー保存）", s15_graphd:"同一プロジェクト内で「グラフタブ」を複数作成し、それぞれ異なるX/Y軸・色分け・グループ設定を保存しておけます。例：「部署別ビュー」と「役職別ビュー」を切り替えて使用できます。",
+  s16_h1:"プロジェクトの暗号化保存とロード",
+  s16_p:"プロジェクトファイル（.mnsb）をローカルに出力して保存します。機密情報を含む場合は強固なパスワード暗号化をかけることができます。",
+  snap_s16_title:"暗号化保存とパスワード解除モーダル",
+  snap_s16_desc:"【キャプチャ対象】保存ダイアログの「パスワードを設定する」オプションと、暗号化ファイル読込時に表示されるパスワード入力モーダル。",
+  s16_save:"プロジェクトの保存（.mnsb 出力）", s16_saved:"ツールバーの「💾 保存」ボタンを押すと保存モーダルが開きます。ファイル名を確認後「保存」を押すと、プロジェクトデータが .mnsb 形式でダウンロードされます。",
+  s16_pass:"パスワード暗号化の設定", s16_passd:"保存モーダルで「パスワードを設定して保存する」をONにしてパスワードを2回入力します。クライアント側で暗号化されたファイルが出力されます。",
+  s16_load:"暗号化ファイルの読み込み", s16_loadd:"暗号化済み .mnsb ファイルを開こうとすると「パスワード解除モーダル」が自動で起動します。正しいパスワードを入力することで復号・ロードされます。",
+  s16_warn_t:"パスワードは絶対に管理してください", s16_warn_d:"パスワードはアプリ側では一切保持されません。パスワードを紛失した場合、プロジェクトデータの復元は不可能です。",
+  s17_h1:"CSV インポート / エクスポートとバリデーション",
+  s17_p:"有料版では、ノードデータとフィールド定義をCSV形式でExcel等の外部システムと相互交換できます。インポート時は自動データ検証が走ります。",
+  s17_imp:"ノードリストのCSVインポート", s17_impd:"テーブルビューの「ノード」タブにある「⬆️ CSV読み込み」ボタンからCSVを選択します。ヘッダー行がフィールド名と自動マッチングされ、データが一括インポートされます。",
+  s17_exp:"ノードリストのCSVエクスポート", s17_expd:"「⬇️ CSV書き出し」ボタンで、現在のノード一覧（全フィールド含む）をCSV形式でダウンロードします。Excelやスプレッドシートで編集後に再インポートできます。",
+  s17_mast:"フィールド定義のCSV連携", s17_mastd:"「フィールド」タブの CSV読み込み/書き出しでは、フィールド名・タイプ・選択肢定義などのマスターデータをCSVで一括管理できます。",
+  s17_val:"バリデーションエラーモーダル", s17_vald:"インポート時に型エラー（日付欄に文字列・数値欄に非数値・選択肢外の値など）が検出された場合、自動でエラーモーダルが起動し、「ノードID / フィールド名 / 入力値 / エラー理由」が表形式で一覧表示されます。エラー箇所は安全なデフォルト値に自動補正されます。",
+  snap_s17_title:"CSVバリデーションエラーダイアログ",
+  snap_s17_desc:"【キャプチャ対象】CSVインポート後に自動起動するエラーモーダル。テーブル形式でエラー箇所（ノードID・フィールド・インポートされた値・理由）が一覧表示されている状態。",
+  s18_h1:"グラフの画像エクスポート（PNG / SVG）",
+  s18_p:"有料版では、現在のキャンバスに表示されているグラフを高解像度の画像ファイルとして出力できます。プレゼンや報告書への貼り付けに最適です。",
+  snap_s18_title:"画像エクスポートと保存モーダル",
+  snap_s18_desc:"【キャプチャ対象】「グラフを保存」ボタン押下時に起動する、出力形式（PNG / SVG）選択ダイアログ。",
+  s18_1:"「🖼️ グラフを保存」ボタンをクリック", s18_1d:"ツールバーの「🖼️ グラフを保存」ボタンを押すと、出力フォーマット選択モーダルが開きます。",
+  s18_2:"PNG または SVG を選択してダウンロード", s18_2d:"「PNG形式で保存」を選ぶと高解像度のラスター画像（ビットマップ）が、「SVG形式で保存」を選ぶとスケーラブルなベクター画像が出力されます。",
+  s18_tip_t:"SVGはそのまま編集可能", s18_tip_d:"SVG形式で出力したファイルは、Illustrator・Inkscape・Figmaなどのベクターグラフィックツールでそのままレイアウト編集することができます。",
+  footer:"本ガイドは MultiNode Sync Builder の全機能を網羅したユーザー向けリファレンスです。"
+},
+en:{
+  cat0:"1. Overview &amp; Specs", cat1:"2. Basic Guide", cat2:"3. Advanced", cat3:"4. Analysis &amp; Search", cat4:"5. Data &amp; Premium Features",
+  m_download:"App Download",
+  m_intro:"Overview &amp; Free/Pro Comparison", m_s1:"Step 1: Startup &amp; Templates", m_s2:"Step 2: Node Operations", m_s3:"Step 3: Creating Links",
+  m_s4:"Step 4: View Switching", m_s5:"Step 5: Undo / Redo", m_s6:"Step 6: Field Definitions", m_s7:"Step 7: Option Colors, Shapes &amp; Sizes",
+  m_s8:"Step 8: Drag to Reorder", m_s9:"Step 9: Axis Mapping &amp; Scaling", m_s10:"Step 10: Group Enclosure",
+  m_s11:"Step 11: Filtering", m_s12:"Step 12: Statistics Panel", m_s13:"Step 13: Legend &amp; Search",
+  m_s14:"Step 14: Bulk Edit", m_s15:"Step 15: Project Management", m_s16:"Step 16: Encrypted Saves",
+  m_s17:"Step 17: CSV &amp; Validation", m_s18:"Step 18: Image Export",
+  badge_intro:"Overview",
+  dl_h1:"Download MultiNode Sync Builder",
+  dl_p:"MultiNode Sync Builder can be securely installed and updated from the Microsoft Store. Please access the download page using one of the methods below.",
+  dl_deep_title:"Open in Microsoft Store App",
+  dl_deep_desc:"Recommended for Windows 10 or 11 users. Renders the local Store app directly for a quick, one-click installation.",
+  dl_deep_btn:"🛍️ Launch Store App",
+  dl_web_title:"Open in Web Browser",
+  dl_web_desc:"Use this option if you want to view the product details on the Microsoft Store web page or if the Store app does not launch properly.",
+  dl_web_btn:"🌐 Open Web Store",
+  hint_view:"💡 View Demo GIF",
+  snap_title:"Demo Video Placeholder",
+  snap_desc:"Short GIF video showing the operations for this step.",
+  guide_def_title:"💡 Feature &amp; Definition",
+  guide_op_title:"🚀 How to Operate",
+  intro_h1:"MultiNode Sync Builder Complete Feature Guide",
+  intro_p:"This app is an integrated data-mapping platform. Place 'nodes' (people, systems, tasks) on a canvas, connect them with links, and visualize relationships as network graphs or Gantt timelines. Sizes, colors, shapes, and coordinates auto-scale based on each node's custom field values.",
+  intro_cap:"Demo image showcasing multi-dimensional axis mapping and node relationships",
+  intro_compare_h:"👑 Free vs Premium Version Comparison",
+  intro_compare_p:"Upgrading to Premium unlocks all limits and enables advanced features like CSV and image export.",
+  th_feat:"Feature / Limit", th_free:"Free Version", th_pro:"Premium 👑",
+  r_nodes:"Max Nodes", r_nodes_f:"Up to 7", r_unlimited:"Unlimited",
+  r_fields:"Custom Fields", r_fields_f:"Up to 3",
+  r_items:"Options per Select Field", r_items_f:"Up to 5",
+  r_csv:"CSV Import / Export", r_csv_f:"❌", r_csv_p:"🟢 With validation checks",
+  r_img:"Graph Image Export (PNG/SVG)", r_img_f:"❌", r_img_p:"🟢 High-res output",
+  intro_shortcut_h:"⌨️ Keyboard Shortcut Reference",
+  kb_op:"Action", kb_key:"Key",
+  kb_undo:"Undo", kb_redo:"Redo", kb_del:"Delete selected node(s)",
+  kb_save:"Save Project", kb_saveas:"Save Project As", kb_open:"Open Project",
+  kb_new:"New Project", kb_find:"Search Nodes", kb_selectall:"Select All Nodes", kb_help:"View Help",
+  s1_h1:"App Startup &amp; Template Loading",
+  s1_p:"The Startup Dashboard opens on launch, letting you quickly switch language, choose a template, or import an existing project file.",
+  snap_s1_title:"Startup Dashboard Modal",
+  snap_s1_desc:"[Screenshot target] The full startup modal showing the EN/JA toggle, 'Open previous file' button, and template card list (9-Box, Gantt, Risk, etc.).",
+  s1_1:"Language Switch", s1_1d:"Toggle 'EN/JA' at the top right of the startup modal to instantly translate all UI text. This toggle is also always visible on the right side of the main toolbar.",
+  s1_2:"Load Project File (.mnsb)", s1_2d:"Click 'Load and resume' to import a previously saved .mnsb project file. Encrypted files will automatically prompt for a password.",
+  s1_3:"Select &amp; Load Template", s1_3d:"Choose from 6 templates: '9-Box Talent Grid', 'Gantt &amp; Kanban', 'Risk Assessment', 'Value vs Effort', 'System Architecture', 'Customer Journey'. Free Version auto-simplifies data on load.",
+  s1_4:"Create a New Project from Scratch", s1_4d:"Click 'Create from Scratch' on the dashboard, or select 'File' > 'New' from the menu bar (or press Ctrl+N) to start with a blank project. Best when you want to design nodes and custom fields entirely from the ground up.",
+  s1_tip_t:"Add more templates anytime", s1_tip_d:"After startup, click the 'Template ▾' button in the toolbar to load additional templates as new projects at any time.",
+  s2_h1:"Node Operations (People, Tasks, Systems)",
+  s2_p:"Learn the fundamentals of creating, editing, sizing, and removing nodes.",
+  snap_s2_title:"Main Canvas &amp; Node Management Panel",
+  snap_s2_desc:"[Screenshot target] The central D3 canvas (nodes &amp; links) alongside the left Node Management Panel (add input and avatar thumbnail list).",
+  s2_a:"Add New Node", s2_ad:"Double-click on any empty space of the canvas background, or use the 'Add New' button in the Node List (Table View).",
+  s2_b:"Edit Details & Set Image (Click)", s2_bd:"Click any node to open the Detail Panel. You can view and edit the Node Name, individual size (10–300%), Field values, Relation settings, Image, and Memo in order. Set images by clicking 'Select Image' via the file selection dialog. Once set, click 'Edit' to open the Image Adjustment modal to adjust the zoom (0.2x to 5.0x) or positioning offsets. Images are automatically clipped based on the node's shape.",
+  s2_d:"Delete Node", s2_dd:"Click the trash icon in the Node Panel, or select a node and press Delete. Press Ctrl+Z to instantly undo any accidental deletion.",
+  s3_h1:"Creating Links &amp; Auto-Thickness",
+  s3_p:"Draw visual connections between nodes. The line thickness is automatically optimized based on the connection density of the nodes.",
+  s3_1:"Drag-to-Connect", s3_1d:"Hover over a node to reveal the connection handle (●) on its right edge. Drag it onto another node to create a link. You can also add links from the Detail Panel or Table View.",
+  s3_3:"Dynamic Thickness based on Connection Count", s3_3d:"Line thickness is dynamically scaled from 1.5px to 6px based on the average connection count (degree) of the two connected nodes. This highlights hub-to-hub connections automatically.",
+  snap_s3_title:"Creating & Deleting Links",
+  snap_s3_desc:"[Video target] Creating a link by dragging the connector handle, and deleting a link by clicking the hover '×' button.",
+  s4_h1:"View Mode Switching",
+  s4_p:"Switch instantly between the Graph, Stats Chart, Node List, and Field List views using the dedicated switcher section in the center of the toolbar.",
+  snap_s4_title:"Gantt Timeline View",
+  snap_s4_desc:"[Screenshot target] The Gantt view with X axis showing a date timeline and nodes displayed as horizontal task bars.",
+  s4_graph_main:"Graph View (📊 Graph)",
+  s4_graph_main_d:"The main canvas view for data visualization. Automatically switches between the following two display modes based on your axis mapping:",
+  s4_graph_net:"🌐 Network Graph Mode",
+  s4_graph_net_d:"Places nodes on a 2D grid based on X/Y axis fields and renders links as a directed graph. You can drag and pin node positions.",
+  s4_graph_gantt:"📅 Gantt Timeline Mode",
+  s4_graph_gantt_d:"Automatically switches the X-axis to a date timeline and displays nodes as horizontal bars when a 'Date (Period)' type field is assigned to the X-axis.",
+  s4_stats_chart:"Stats Chart View (📈 Stats Chart)",
+  s4_stats_chart_d:"Aggregates project data in real time and renders beautiful full-canvas charts (bar, stacked, line, pie, donut) for visual analysis. Adjust chart settings at any time using the panel in the top-left.",
+  s4_table:"Node / Field List (Table View)", s4_tabled:"Lists all nodes and field values in a spreadsheet grid. Best for rapid keyboard entry across many rows. Switch between 'Node List' and 'Field Definition List' tabs.",
+  s5_h1:"Undo / Redo",
+  s5_p:"Every action (add/delete nodes, change fields, draw links) is tracked in history. Safely undo and redo at any time.",
+  s5_undo:"Undo", s5_undod:"Click the '↩' toolbar button or press Ctrl+Z to reverse the last action. Press repeatedly to go further back.",
+  s5_redo:"Redo", s5_redod:"Click '↪' or press Ctrl+Y to re-apply an undone action.",
+  snap_s5_title:"Undo & Redo Operations",
+  snap_s5_desc:"[Screenshot target] Toolbar containing Undo (↩) and Redo (↪) buttons.",
+  s5_warn_t:"Template loads and resets clear history", s5_warn_d:"Loading a template or resetting data clears the undo/redo stack. Save your project first if needed.",
+  s6_h1:"Custom Field Definitions (4 Types)",
+  s6_p:"Add and configure custom attribute fields via the Axis Control Panel on the right to design your data schema.",
+  snap_s6_title:"Axis Control Panel (Field List)",
+  snap_s6_desc:"[Screenshot target] The right floating panel showing each custom field with its name, type badge, and edit button.",
+  s6_sel:"Select Option", s6_seld:"Predefined choice lists like 'Status', 'Job Title', or 'Priority'. Supports per-option color, shape, and size. Usable for X/Y axes, color, and shape mapping.",
+  s6_num:"Number", s6_numd:"Integer or float data (Progress %, Score). Auto-scales node size (50–200%) relative to min/max when used as an axis.",
+  s6_cur:"Currency", s6_curd:"Financial values like Budget or Salary. Supports localized symbols (JPY/USD/EUR). Same size scaling behavior as Number.",
+  s6_date:"Date Period", s6_dated:"Start and end date pairs. Acts as the time-axis scale in Gantt View.",
+  s7_h1:"Per-Option Visual Customization (Color, Shape, Size)",
+  s7_p:"For Select-type fields, define visual rendering rules per option to maximize visual clarity.",
+  snap_s7_title:"Field Option List (Color, Shape, Size)",
+  snap_s7_desc:"[Screenshot target] Field edit view inside the axis panel, showing each option row with a color picker, shape selector, and size percentage input.",
+  s7_col:"Color Picker", s7_cold:"Click the color swatch (■) on each option row to pick a color. When you assign this field to 'Color By', nodes get that color applied.",
+  s7_shp:"Shape Selector", s7_shpd:"Choose from circle, square, triangle, diamond, pentagon, hexagon, star, double-circle, etc. per option. Applied when the field is assigned to 'Shape By'.",
+  s7_siz:"Size Scale (%)", s7_sizd:"Enter a size percentage (10–500%) per option. Example: VP → 300%, Intern → 50%. Only applied when this field is assigned to the X or Y axis.",
+  s8_h1:"Drag &amp; Drop to Reorder Options (Axis Ordering)",
+  s8_p:"Reorder the options within a Select field to control the display order on graph axes and Gantt rows.",
+  snap_s8_title:"Reordering Options via Drag & Drop",
+  snap_s8_desc:"[Video target] Grabbing the ≡ drag handle and reordering option rows, showing real-time updates of graph axes and Gantt rows.",
+  s8_1:"Grab the Drag Handle ≡", s8_1d:"Click and hold the ≡ drag handle at the left of any option row.",
+  s8_2:"Drag Up/Down &amp; Drop", s8_2d:"Move the row to the desired position and release. Graph X/Y axis order and Gantt row order update instantly.",
+  s9_h1:"Axis Mapping &amp; Dynamic Size Scaling",
+  s9_p:"Assign fields to axes (X, Y, Color, Shape, Group) to visualize the same data from multiple angles.",
+  s9_cap:"Automatic node size scaling when Job Title field is assigned to Y axis",
+  s9_1:"Map Fields to X and Y Axes", s9_1d:"Use the dropdowns at the top of the Axis Control Panel to assign fields to X and Y. Select fields produce 2D grids; Number fields use continuous coordinates.",
+  s9_2:"Size Scaling Trigger", s9_2d:"Per-option size percentages (from Step 7) activate only when that field is assigned to the X or Y axis. Without assignment, nodes stay at default size.",
+  s9_3:"Color &amp; Shape Mapping", s9_3d:"Assign fields to 'Color By' and 'Shape By' to instantly apply the configured colors and shapes to all nodes on the canvas.",
+  snap_s9_title:"Canvas with Size Scaling Applied",
+  snap_s9_desc:"[Screenshot target] Y axis mapped to 'Job Title' — VP nodes very large (300%), Intern nodes very small (50%).",
+  s10_h1:"Group Enclosure (Grouping by Field)",
+  s10_p:"Assigning a field to the 'Group (G)' axis draws elliptical enclosures around nodes that share the same option value.",
+  snap_s10_title:"Group Enclosure Display",
+  snap_s10_desc:"[Screenshot target] Department field assigned to G axis — Engineering, Sales, HR teams each enclosed in a labeled ellipse.",
+  s10_1:"Assign Field to G (Group) Axis", s10_1d:"Select a Select-type field in the 'Grouping (G)' dropdown in the Axis Panel. Nodes sharing the same value are auto-grouped in an ellipse.",
+  s10_2:"Group Labels", s10_2d:"Each ellipse is auto-labeled with the group's option name in the top-right corner, providing at-a-glance team/department identification.",
+  s11_h1:"Filtering (Node Visibility Control)",
+  s11_p:"Use the Filter Panel to narrow down which nodes appear on the canvas and in statistics.",
+  snap_s11_title:"Filtering Panel",
+  snap_s11_desc:"[Screenshot target] Filter panel options toggled to narrow down visible nodes on the canvas.",
+  s11_1:"Filter by Node Name", s11_1d:"Type in the node search box of the Filter Panel. Only matching nodes remain visible on canvas. Use 'Select All' / 'Deselect All' for bulk control.",
+  s11_2:"Filter by Field Values", s11_2d:"Check/uncheck option boxes per field to show only nodes belonging to specific departments, priorities, or statuses.",
+  s11_3:"Reset All Filters", s11_3d:"Click 'Reset All Filters' to clear all active filter conditions at once.",
+  s12_h1:"Statistics Panel (Text Aggregation)",
+  s12_p:"The side \"Statistics\" panel displays real-time textual summaries of your project data, including total node counts and value distributions for each custom field.",
+  snap_s12_title:"Statistics Panel",
+  snap_s12_desc:"[Screenshot target] The side Statistics panel showing textual numeric summaries of node and field distribution.",
+  s12_chart_h:"📈 Available Chart Types",
+  chart_type:"Chart Type", chart_use:"Best For",
+  ct_bar:"Bar Chart", ct_bar_u:"Comparing counts/totals across categories",
+  ct_stk:"Stacked Bar", ct_stk_u:"Breakdown comparison within categories",
+  ct_line:"Line Chart", ct_line_u:"Trends and numeric progressions",
+  ct_pie:"Pie Chart", ct_pie_u:"Proportion of whole",
+  ct_donut:"Donut Chart", ct_donut_u:"Clean proportion view with center label",
+  s12_1:"Real-time Value Aggregation", s12_1d:"Adding, deleting nodes or editing field values on the canvas immediately synchronizes the aggregated numbers in the panel.",
+  s12_2:"Integration with Filters", s12_2d:"If you filter nodes via the Filter Panel, the Statistics Panel instantly updates to compute values based only on currently visible nodes.",
+  s13_h1:"Legend Panel &amp; Canvas Node Search",
+  s13_p:"Even with large datasets, the Legend and Search features let you navigate quickly.",
+  snap_s13_title:"Legend & Canvas Node Search",
+  snap_s13_desc:"[Screenshot target] Live legend panel in the bottom-left corner and search box in the toolbar with a focused node.",
+  s13_leg:"Legend Panel", s13_legd:"Displays a live key for the active 'Color By' and 'Shape By' mappings — showing which color/shape represents which value.",
+  s13_search:"Canvas Node Search", s13_searchd:"Type a node name in the toolbar search box to highlight matching nodes on canvas and auto-scroll them to the center of the viewport.",
+  s14_h1:"Bulk Edit",
+  s14_p:"Select multiple nodes at once to batch-update field values or delete them all in one action.",
+  snap_s14_title:"Multi-selection & Bulk Edit",
+  snap_s14_desc:"[Video target] Rubber-band selection on the canvas and batch-updating field values via the Bulk Edit panel.",
+  s14_1:"Select Multiple Nodes", s14_1d:"Check boxes in the Node Panel or rubber-band drag on canvas to multi-select.",
+  s14_2:"Bulk Value Change", s14_2d:"In the '👥 Bulk Edit' panel, choose a target field and new value. All selected nodes are updated simultaneously.",
+  s14_3:"Bulk Delete", s14_3d:"Click 'Delete' to remove all selected nodes. Press Ctrl+Z to undo.",
+  s15_h1:"Multi-Project &amp; Graph Tab Management",
+  s15_p:"Manage multiple projects and multiple graph views per project in a single session.",
+  snap_s15_title:"Multi-Project & Graph Tabs",
+  snap_s15_desc:"[Screenshot target] Project selector dropdown at the top toolbar and multiple graph tabs configured.",
+  s15_proj:"Switch Between Projects", s15_projd:"Use the project list in the left toolbar area to switch between projects. Each project has its own nodes, fields, and graph settings.",
+  s15_graph:"Graph Tabs (Multiple Saved Views)", s15_graphd:"Create multiple graph tabs within one project, each storing different X/Y/Color/Group settings. Example: 'By Department' tab and 'By Job Title' tab.",
+  s16_h1:"Encrypted Project Save &amp; Load",
+  s16_p:"Export your project as a .mnsb file for local backup, with optional AES-style password encryption.",
+  snap_s16_title:"Encrypted Saves & Decryption",
+  snap_s16_desc:"[Screenshot target] Password prompt checkbox on save and the Password Decrypt modal on load.",
+  s16_save:"Save Project (.mnsb)", s16_saved:"Click '💾 Save' in the toolbar to open the Save modal. Confirm the filename and click Save to download the .mnsb project file.",
+  s16_pass:"Set Password Encryption", s16_passd:"Check 'Save with password' in the Save modal and enter the password twice. The output file is fully encrypted client-side before writing.",
+  s16_load:"Load Encrypted File", s16_loadd:"Opening an encrypted .mnsb file auto-triggers the Password Decrypt modal. Enter the correct password to decrypt and load the project.",
+  s16_warn_t:"Password cannot be recovered", s16_warn_d:"Passwords are never stored by the app. If you forget your password, the project data cannot be opened or recovered.",
+  s17_h1:"CSV Import / Export &amp; Validation",
+  s17_p:"Premium users can exchange node data and field definitions with Excel and external systems using CSV files.",
+  s17_imp:"Node List CSV Import", s17_impd:"Click '⬆️ CSV Import' in the Table View 'Node' tab. Headers are automatically matched to field names for bulk import.",
+  s17_exp:"Node List CSV Export", s17_expd:"Click '⬇️ CSV Export' to download all nodes (with all fields) as a CSV for editing in Excel, then re-import.",
+  s17_mast:"Field Definition CSV", s17_mastd:"The 'Field' tab also has CSV import/export to manage field names, types, and option lists in bulk.",
+  s17_val:"Validation Error Modal", s17_vald:"On import, the app detects type errors (wrong date format, text in numeric field, unknown select option). An error modal auto-launches listing Node ID / Field / Value / Reason in a table. Erroneous values are auto-corrected to safe defaults.",
+  snap_s17_title:"CSV Validation Error Modal",
+  snap_s17_desc:"[Screenshot target] The validation error popup auto-launched after CSV import, showing the error table (Node ID, Field, Imported Value, Reason).",
+  s18_h1:"Graph Image Export (PNG / SVG)",
+  s18_p:"Premium users can export the current canvas view as a high-resolution image file for presentations and reports.",
+  snap_s18_title:"Graph Image Export",
+  snap_s18_desc:"[Screenshot target] Export format selection modal showing PNG and SVG options.",
+  s18_1:"Click '🖼️ Save Graph'", s18_1d:"Press the '🖼️ Save Graph' toolbar button to open the export format selection modal.",
+  s18_2:"Choose PNG or SVG and Download", s18_2d:"'Save as PNG' outputs a high-resolution raster image. 'Save as SVG' outputs a scalable vector graphic.",
+  s18_tip_t:"SVG files are directly editable", s18_tip_d:"SVG outputs can be opened and edited in Illustrator, Inkscape, Figma, or any other vector graphics tool.",
+  footer:"This guide is a comprehensive reference for all MultiNode Sync Builder features."
+}
+};
+
+let lang='ja';
+function sw(l){
+    lang=l;
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.lang-btn').forEach(b=>{if(b.textContent.includes(l==='ja'?'日本語':'English'))b.classList.add('on');});
+    document.querySelectorAll('[data-i]').forEach(el=>{
+        const k=el.getAttribute('data-i');
+        if(T[l]&&T[l][k]!==undefined)el.innerHTML=T[l][k];
+    });
+}
+
+// scroll spy
+window.addEventListener('scroll',()=>{
+    const secs=[...document.querySelectorAll('.sec')];
+    const lis=[...document.querySelectorAll('.nav-li')];
+    let cur='download';
+    secs.forEach(s=>{if(window.scrollY>=s.offsetTop-150)cur=s.id;});
+    lis.forEach(li=>{li.classList.remove('on');if(li.id==='m-'+cur)li.classList.add('on');});
+});
+</script>
+</body>
+</html>
