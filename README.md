@@ -13,7 +13,7 @@ A Windows application that loads and auto-syncs multiple video files for simulta
 - 🔒 **[プライバシーポリシー / Privacy Policy](MultiViewSyncPlayer/PRIVACY.md)**
 
 ---
-## 🎬 MultiNode Sync Builder
+## 🏢 MultiNode Sync Builder
 タスクや人材を1箇所で管理し、タイムライン、9ボックス、優先度マトリクス、統計グラフなどの多次元ビューへ瞬時に切り替え、同期・分析するビジュアルモデリングツール。Windowsアプリケーション。
 A visual modeling tool for managing tasks and personnel in a single location, allowing for instant switching between—and synchronization and analysis of—multidimensional views such as timelines, 9-box grids, priority matrices, and statistical graphs. A Windows application.
 
